@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">GoraGPSBeacon</string>
+    <string name="prompt_metanim">Enter Metanim</string>
+    <string name="prompt_username">Enter Username</string>
+    <string name="prompt_password">Enter Password</string>
+    <string name="action_sign_in">Sign In</string>
+    <string name="start_tracking">Start</string>
+</resources>

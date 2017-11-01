@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/activity_login_vertical_margin"
+    android:paddingTop="@dimen/activity_login_vertical_margin"
+    android:background="@drawable/side_nav_bar"
+    tools:context=".activities.LoginActivity">
+
+    <!-- Login process -->
+    <ProgressBar android:id="@+id/login_progress"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:layout_centerInParent="true"
+        android:visibility="gone" />
+
+    <ScrollView android:id="@+id/login_form"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout android:id="@+id/gora_login_form"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_gravity="center">
+
+            <AutoCompleteTextView android:id="@+id/metanim"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/prompt_metanim"
+                android:textColorHint="@color/textHintColor"
+                android:textStyle="italic"
+                android:inputType="text"
+                android:focusable="true"
+                android:textSize="15sp"
+                android:textColor="@color/textFieldColor"
+                android:nextFocusForward="@+id/username"
+                android:singleLine="true" />
+
+            <AutoCompleteTextView android:id="@+id/username"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/prompt_username"
+                android:textColorHint="@color/textHintColor"
+                android:textStyle="italic"
+                android:inputType="text"
+                android:focusable="true"
+                android:textSize="15sp"
+                android:textColor="@color/textFieldColor"
+                android:nextFocusForward="@+id/password"
+                android:singleLine="true" />
+
+            <EditText android:id="@+id/password"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:hint="@string/prompt_password"
+                android:textColorHint="@color/textHintColor"
+                android:textStyle="italic"
+                android:inputType="textPassword"
+                android:focusable="true"
+                android:textSize="15sp"
+                android:textColor="@color/textFieldColor"
+                android:singleLine="true" />
+                <!--android:imeActionId="@id/login"-->
+                <!--android:imeActionLabel="Sign In"-->
+                <!--android:imeOptions="actionUnspecified"-->
+
+            <Button android:id="@+id/sign_in_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:textColor="@color/textFieldColor"
+                android:text="@string/action_sign_in"
+                android:background="@drawable/button_selector"
+                android:textStyle="bold"
+                style="?android:attr/borderlessButtonStyle"/>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</RelativeLayout>
