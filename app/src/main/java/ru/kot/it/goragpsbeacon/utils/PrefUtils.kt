@@ -21,6 +21,13 @@ object PrefUtils {
         editor.apply()
     }
 
+    fun saveStringSetToPrefs(context: Context, key: String, value: HashSet<String>) {
+        val prefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+        val editor: SharedPreferences.Editor = prefs.edit()
+        editor.putStringSet(key, value)
+        editor.apply()
+    }
+
     fun getFromPrefs(context: Context, key: String, defaultValue: String): String {
         val sharedPrefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
         return try {
@@ -35,6 +42,16 @@ object PrefUtils {
         val sharedPrefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
         return try {
             sharedPrefs.getBoolean(key, defaultValue)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            defaultValue
+        }
+    }
+
+    fun getStringSetFromPrefs(context: Context, key: String, defaultValue: HashSet<String>): HashSet<String> {
+        val sharedPrefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+        return try {
+            sharedPrefs.getStringSet(key, defaultValue) as HashSet<String>
         } catch (e: Exception) {
             e.printStackTrace()
             defaultValue

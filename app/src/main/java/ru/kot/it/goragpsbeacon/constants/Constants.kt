@@ -9,9 +9,17 @@ object Constants {
 
     val INTENT_LOCATION_VALUE: String = "currentLocation"
 
-    val LOCATION_INTERVAL: Long = 1000L
+    val USER_LOCATION_SERVICE: String = "UserLocationTracking"
 
-    val GPS_ACCURACY_LEVEL: Float = 10f // 10 meters accuracy
+    val LOCATION_INTERVAL: Long = 1000.toLong()  // In milliseconds
 
-    val BASE_URL: String = "https://gora.online"
+    val GPS_ACCURACY_LEVEL: Float = 10.toFloat() // In meters
+
+    val BASE_URL: String = "gora.online"
+
+    val PREF_COOKIES = "cookiesInSharedPreferences"
+    val PREF_IS_LOGGED_IN_KEY = "loggedIn"
+    val PREF_METANIM_KEY = "metanim"
+    val PREF_USERNAME_KEY = "userName"
+    val PREF_PASSWORD_KEY = "userPassword"
 }

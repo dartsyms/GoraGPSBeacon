@@ -8,6 +8,8 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
 import android.util.Log
+import ru.kot.it.goragpsbeacon.constants.Constants
+import java.util.*
 
 
 class UserLocationService: Service() {
@@ -54,25 +56,27 @@ class UserLocationService: Service() {
             }
     }
 
-
     companion object {
-        val TAG = "LocationTrackingService"
-
-        val INTERVAL = 1000.toLong() // In milliseconds
-        val DISTANCE = 10.toFloat() // In meters
+        val TAG = Constants.USER_LOCATION_SERVICE
+        val INTERVAL = Constants.LOCATION_INTERVAL
+        val DISTANCE = Constants.GPS_ACCURACY_LEVEL
 
         val locationListeners = arrayOf(
-                LTRLocationListener(LocationManager.GPS_PROVIDER),
-                LTRLocationListener(LocationManager.NETWORK_PROVIDER)
+                ULTLocationListener(LocationManager.GPS_PROVIDER),
+                ULTLocationListener(LocationManager.NETWORK_PROVIDER)
         )
 
-        class LTRLocationListener(provider: String) : LocationListener {
+        class ULTLocationListener(provider: String) : LocationListener {
 
             val lastLocation = Location(provider)
 
             override fun onLocationChanged(location: Location?) {
                 lastLocation.set(location)
-                // TODO: Send location to the server
+                // TODO: Send current location to the server after network availability check (or store them in array)
+                location.let {
+                    sendData(location!!, Calendar.getInstance().timeInMillis.toString())
+                }
+
             }
 
             override fun onProviderDisabled(provider: String?) {
@@ -82,6 +86,10 @@ class UserLocationService: Service() {
             }
 
             override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
+            }
+
+            private fun sendData(location: Location, timestamp: String) {
+                // TODO: Implement via web services with auth check
             }
 
         }
