@@ -9,6 +9,8 @@ import android.location.LocationManager
 import android.os.Bundle
 import android.util.Log
 import ru.kot.it.goragpsbeacon.constants.Constants
+import ru.kot.it.goragpsbeacon.infrastructure.GoraGPSBeaconApp
+import ru.kot.it.goragpsbeacon.utils.GPSHelper
 import java.util.*
 
 
@@ -27,20 +29,27 @@ class UserLocationService: Service() {
         if (locationManager == null)
             locationManager = applicationContext.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
-        try {
-            locationManager?.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, INTERVAL, DISTANCE, locationListeners[1])
-        } catch (e: SecurityException) {
-            Log.e(TAG, "Fail to request location update", e)
-        } catch (e: IllegalArgumentException) {
-            Log.e(TAG, "Network provider does not exist", e)
-        }
+        when (GPSHelper.checkLocationPermission(GoraGPSBeaconApp.getContext())) {
 
-        try {
-            locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, INTERVAL, DISTANCE, locationListeners[0])
-        } catch (e: SecurityException) {
-            Log.e(TAG, "Fail to request location update", e)
-        } catch (e: IllegalArgumentException) {
-            Log.e(TAG, "GPS provider does not exist", e)
+            GPSHelper.hasGPSProviderEnabled(GoraGPSBeaconApp.getContext()) -> {
+                try {
+                    locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, INTERVAL, DISTANCE, locationListeners[0])
+                } catch(e: SecurityException) {
+                    Log.e(TAG, "Fail to request location update", e)
+                } catch (e: IllegalArgumentException) {
+                    Log.e(TAG, "GPS provider does not exist", e)
+                }
+            }
+
+            GPSHelper.hasNetworkProviderEnabled(GoraGPSBeaconApp.getContext()) -> {
+                try {
+                    locationManager?.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, INTERVAL, DISTANCE, locationListeners[1])
+                } catch (e: SecurityException) {
+                    Log.e(TAG, "Fail to request location update", e)
+                } catch (e: IllegalArgumentException) {
+                    Log.e(TAG, "Network provider does not exist", e)
+                }
+            }
         }
     }
 
@@ -62,11 +71,11 @@ class UserLocationService: Service() {
         val DISTANCE = Constants.GPS_ACCURACY_LEVEL
 
         val locationListeners = arrayOf(
-                ULTLocationListener(LocationManager.GPS_PROVIDER),
-                ULTLocationListener(LocationManager.NETWORK_PROVIDER)
+                ULTListener(LocationManager.GPS_PROVIDER),
+                ULTListener(LocationManager.NETWORK_PROVIDER)
         )
 
-        class ULTLocationListener(provider: String) : LocationListener {
+        class ULTListener(provider: String) : LocationListener {
 
             val lastLocation = Location(provider)
 
@@ -76,7 +85,6 @@ class UserLocationService: Service() {
                 location.let {
                     sendData(location!!, Calendar.getInstance().timeInMillis.toString())
                 }
-
             }
 
             override fun onProviderDisabled(provider: String?) {

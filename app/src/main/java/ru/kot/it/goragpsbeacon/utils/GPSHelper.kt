@@ -14,9 +14,14 @@ import ru.kot.it.goragpsbeacon.constants.Constants
 
 object GPSHelper {
 
-    fun hasGPSEnabled(context: Context): Boolean {
+    fun hasGPSProviderEnabled(context: Context): Boolean {
         val locManager: LocationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         return locManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+    }
+
+    fun hasNetworkProviderEnabled(context: Context): Boolean {
+        val locManager: LocationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return locManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
     }
 
     fun checkLocationPermission(context: Context): Boolean {
