@@ -17,9 +17,9 @@ object Constants {
 
     val BASE_URL: String = "gora.online"
 
-    val PREF_COOKIES = "cookiesInSharedPreferences"
-    val PREF_IS_LOGGED_IN_KEY = "loggedIn"
-    val PREF_METANIM_KEY = "metanim"
-    val PREF_USERNAME_KEY = "userName"
-    val PREF_PASSWORD_KEY = "userPassword"
+    val PREF_COOKIES = "ru.kot.it.goragpsbeacon.COOKIES"
+    val PREF_IS_LOGGED_IN_KEY = "ru.kot.it.goragpsbeacon.LOGGED"
+    val PREF_METANIM_KEY = "ru.kot.it.goragpsbeacon.METANIM"
+    val PREF_USERNAME_KEY = "ru.kot.it.goragpsbeacon.USER"
+    val PREF_PASSWORD_KEY = "ru.kot.it.goragpsbeacon.PASS"
 }
