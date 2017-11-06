@@ -236,7 +236,7 @@ class LoginActivity: AppCompatActivity() {
                 mCookie.let { PrefUtils.saveToPrefs(this@LoginActivity, Constants.PREF_COOKIES, mCookie!!) }
                 PrefUtils.saveBooleanToPrefs(this@LoginActivity, Constants.PREF_IS_LOGGED_IN_KEY, true)
 
-                Log.d("LoginActivity", "Put back the intent: " + mMetanim)
+                Log.d("LoginActivity", "Put back the intent with cookies: $mCookie")
                 finish()
             } else {
                 password.error = getString(R.string.error_incorrect_password)
@@ -251,7 +251,6 @@ class LoginActivity: AppCompatActivity() {
     }
 
     fun performPostCall(requestURL: String, postDataParams: HashMap<String, String>): String {
-
         val url: URL
         var response = ""
         var contentLength = ""
@@ -264,7 +263,6 @@ class LoginActivity: AppCompatActivity() {
 
         try {
             url = URL(requestURL + "/system/logon.php")
-
             val conn = url.openConnection() as HttpURLConnection
             conn.readTimeout = 15000
             conn.connectTimeout = 15000
