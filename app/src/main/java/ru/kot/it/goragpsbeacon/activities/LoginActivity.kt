@@ -38,9 +38,7 @@ import android.text.TextUtils
 class LoginActivity: AppCompatActivity() {
 
     private val TAG: String = "LoginActivity"
-
     private var mAuthTask: UserLoginTask? = null
-
     var mCookie: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
@@ -48,7 +46,7 @@ class LoginActivity: AppCompatActivity() {
         setContentView(R.layout.activity_login)
 
         password.setOnEditorActionListener({ textView, id, keyEvent ->
-            if (id == R.id.login_form || id == EditorInfo.IME_NULL) {
+            if (id == R.id.login_go || id == EditorInfo.IME_NULL) {
                 attemptLogin()
             }
            false
@@ -222,19 +220,21 @@ class LoginActivity: AppCompatActivity() {
             showProgress(false)
 
             if (success!!) {
+                // Saving user credentials on success
+                PrefUtils.saveToPrefs(GoraGPSBeaconApp.getContext(), Constants.PREF_METANIM_KEY, mMetanim)
+                PrefUtils.saveToPrefs(GoraGPSBeaconApp.getContext(), Constants.PREF_USERNAME_KEY, mUsername)
+                PrefUtils.saveToPrefs(GoraGPSBeaconApp.getContext(), Constants.PREF_PASSWORD_KEY, mPassword)
+                mCookie.let { PrefUtils.saveToPrefs(GoraGPSBeaconApp.getContext(), Constants.PREF_COOKIES, mCookie!!) }
+                PrefUtils.saveBooleanToPrefs(GoraGPSBeaconApp.getContext(), Constants.PREF_IS_LOGGED_IN_KEY, true)
+
                 // Pass data back to MainActivity
                 val returnIntent = Intent()
                 returnIntent.putExtra("metanim", mMetanim)
+                returnIntent.putExtra("user", mUsername)
+                returnIntent.putExtra("password", mPassword)
                 returnIntent.putExtra("loggedIn", true)
                 returnIntent.putExtra("cookie", mCookie)
                 setResult(Activity.RESULT_OK, returnIntent)
-
-                // Saving user credentials on success
-                PrefUtils.saveToPrefs(this@LoginActivity, Constants.PREF_METANIM_KEY, mMetanim)
-                PrefUtils.saveToPrefs(this@LoginActivity, Constants.PREF_USERNAME_KEY, mUsername)
-                PrefUtils.saveToPrefs(this@LoginActivity, Constants.PREF_PASSWORD_KEY, mPassword)
-                mCookie.let { PrefUtils.saveToPrefs(this@LoginActivity, Constants.PREF_COOKIES, mCookie!!) }
-                PrefUtils.saveBooleanToPrefs(this@LoginActivity, Constants.PREF_IS_LOGGED_IN_KEY, true)
 
                 Log.d("LoginActivity", "Put back the intent with cookies: $mCookie")
                 finish()

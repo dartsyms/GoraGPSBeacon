@@ -14,6 +14,7 @@ import ru.kot.it.goragpsbeacon.factories.WebServiceGenerator
 import ru.kot.it.goragpsbeacon.infrastructure.GoraGPSBeaconApp
 import ru.kot.it.goragpsbeacon.models.UserLocation
 import ru.kot.it.goragpsbeacon.utils.GPSHelper
+import ru.kot.it.goragpsbeacon.utils.NetworkHelper
 import ru.kot.it.goragpsbeacon.utils.PrefUtils
 import java.util.*
 import kotlin.collections.ArrayList
@@ -68,6 +69,8 @@ class UserLocationService: Service() {
                     Log.w(TAG, "Failed to remove location listeners")
                 }
             }
+
+
     }
 
     companion object {
@@ -86,16 +89,26 @@ class UserLocationService: Service() {
             WebServiceGenerator.createService(WebAPI::class.java, GoraGPSBeaconApp.getContext())
         }
 
-        class ULTListener(provider: String) : LocationListener {
+        class ULTListener(provider: String): LocationListener {
 
             val lastLocation = Location(provider)
 
             override fun onLocationChanged(location: Location?) {
                 lastLocation.set(location)
                 // TODO: Send current location to the server after network availability check (or store them in array)
-                location.let {
-                    sendData(location!!, Calendar.getInstance().timeInMillis)
+                when (NetworkHelper.hasNetworkAccess(GoraGPSBeaconApp.getContext())) {
+                    true -> location.let {
+                        sendDataImmediate(location!!.latitude.toString(), location.longitude.toString(), Calendar.getInstance().timeInMillis)
+                        sendDataDeferred(locStore)
+                    }
+                    false -> location.let {
+                        val userLocation = UserLocation(location!!.latitude.toString(),
+                                                        location.longitude.toString(),
+                                                        Calendar.getInstance().timeInMillis)
+                        locStore.add(userLocation)
+                    }
                 }
+
             }
 
             override fun onProviderDisabled(provider: String?) {
@@ -107,10 +120,8 @@ class UserLocationService: Service() {
             override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
             }
 
-            private fun sendData(location: Location, timestamp: Long) {
-                // TODO: Implement via web services with auth check
-
-                val call = webService.sendLocation(location.latitude.toString(), location.longitude.toString(), timestamp.toString())
+            private fun sendDataImmediate(latitude: String, longitude: String, timestamp: Long) {
+                val call = webService.sendLocation(latitude, longitude, timestamp.toString())
                 val result = call.execute()
                 if (!result.isSuccessful) {
                     when (result.code()) {
@@ -120,10 +131,13 @@ class UserLocationService: Service() {
                             val password: String = PrefUtils.getFromPrefs(GoraGPSBeaconApp.getContext(), Constants.PREF_PASSWORD_KEY, "")
                             webService.login(metanim, user, password)
                         }
+                        500 -> {
+                            Log.d("UserLocationService", result.errorBody().toString())
+                        }
                         else -> {
                             // do something with error and save location somewhere
                             Log.d("UserLocationService", result.errorBody().toString())
-                            val userLocation = UserLocation(location.latitude.toString(), location.longitude.toString(), timestamp)
+                            val userLocation = UserLocation(latitude, longitude, timestamp)
                             locStore.add(userLocation)
                         }
                     }
@@ -132,6 +146,14 @@ class UserLocationService: Service() {
                 }
             }
 
+            private fun sendDataDeferred(dataList: ArrayList<UserLocation>) {
+                when (dataList.isEmpty()) {
+                    true -> return
+                    false -> {
+                        dataList.forEach { elem -> sendDataImmediate(elem.latitude!!, elem.longitude!!, elem.timestamp!!)  }
+                    }
+                }
+            }
         }
     }
 }

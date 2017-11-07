@@ -65,7 +65,6 @@ object WebServiceGenerator {
         }
     }
 
-
     private object SendCookiesInterceptor: Interceptor {
         override fun intercept(chain: Interceptor.Chain?): Response {
             chain.let {

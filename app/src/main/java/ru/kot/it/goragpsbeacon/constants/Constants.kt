@@ -17,6 +17,8 @@ object Constants {
 
     val BASE_URL: String = "gora.online"
 
+    val LOGIN_REQUEST_CODE: Int = 901
+
     val PREF_COOKIES = "ru.kot.it.goragpsbeacon.COOKIES"
     val PREF_IS_LOGGED_IN_KEY = "ru.kot.it.goragpsbeacon.LOGGED"
     val PREF_METANIM_KEY = "ru.kot.it.goragpsbeacon.METANIM"

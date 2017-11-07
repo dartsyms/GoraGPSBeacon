@@ -66,10 +66,10 @@
                 android:focusable="true"
                 android:textSize="15sp"
                 android:textColor="@color/textFieldColor"
-                android:singleLine="true" />
-                <!--android:imeActionId="@id/login"-->
-                <!--android:imeActionLabel="Sign In"-->
-                <!--android:imeOptions="actionUnspecified"-->
+                android:singleLine="true"
+                android:imeActionId="9"
+                android:imeActionLabel="Sign In"
+                android:imeOptions="actionUnspecified" />
 
             <Button android:id="@+id/sign_in_button"
                 android:layout_width="match_parent"
