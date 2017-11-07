@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.graphics.Rect
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.support.v7.app.AppCompatActivity
 import android.view.MotionEvent
 import android.view.View
@@ -15,7 +14,6 @@ import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_login.*
 import ru.kot.it.goragpsbeacon.R
 import ru.kot.it.goragpsbeacon.constants.Constants
-import ru.kot.it.goragpsbeacon.infrastructure.GoraGPSBeaconApp
 import ru.kot.it.goragpsbeacon.utils.NetworkHelper
 import ru.kot.it.goragpsbeacon.utils.PrefUtils
 import android.content.Intent
@@ -39,10 +37,10 @@ class LoginActivity: AppCompatActivity() {
 
     private val TAG: String = "LoginActivity"
     private var mAuthTask: UserLoginTask? = null
-    var mCookie: String? = null
+    var mCookie: String = ""
 
-    override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
-        super.onCreate(savedInstanceState, persistentState)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
         password.setOnEditorActionListener({ textView, id, keyEvent ->
@@ -53,18 +51,18 @@ class LoginActivity: AppCompatActivity() {
         })
 
         sign_in_button.setOnClickListener({ view ->
-            if (NetworkHelper.hasNetworkAccess(GoraGPSBeaconApp.getContext())) {
+            if (NetworkHelper.hasNetworkAccess(this)) {
                 attemptLogin()
             } else {
-                Toast.makeText(GoraGPSBeaconApp.getContext(),
+                Toast.makeText(this,
                         "No network connection available", Toast.LENGTH_LONG)
                         .show()
             }
         })
 
-        metanim.setText(PrefUtils.getFromPrefs(GoraGPSBeaconApp.getContext(), Constants.PREF_METANIM_KEY, ""))
-        username.setText(PrefUtils.getFromPrefs(GoraGPSBeaconApp.getContext(), Constants.PREF_USERNAME_KEY, ""))
-        password.setText(PrefUtils.getFromPrefs(GoraGPSBeaconApp.getContext(), Constants.PREF_PASSWORD_KEY, ""))
+        metanim.setText(PrefUtils.getFromPrefs(this, Constants.PREF_METANIM_KEY, ""))
+        username.setText(PrefUtils.getFromPrefs(this, Constants.PREF_USERNAME_KEY, ""))
+        password.setText(PrefUtils.getFromPrefs(this, Constants.PREF_PASSWORD_KEY, ""))
     }
 
     override fun dispatchTouchEvent(event: MotionEvent?): Boolean {
@@ -143,6 +141,7 @@ class LoginActivity: AppCompatActivity() {
             showProgress(true)
             mAuthTask = UserLoginTask(meta, user, pass)
             (mAuthTask as UserLoginTask).execute()
+            finish()
         }
     }
 
@@ -204,11 +203,13 @@ class LoginActivity: AppCompatActivity() {
 
         override fun doInBackground(vararg params: Void): Boolean? {
             // Attempt authentication
-            val requestURL = "https://$mMetanim.gora.online"
+            val requestURL = "http://$mMetanim.gora.online"
             val postDataParams: HashMap<String, String> = HashMap()
             postDataParams.put("system", mMetanim)
             postDataParams.put("user", mUsername)
             postDataParams.put("password", mPassword)
+
+            Log.d("LoginActivity", "Before postCall: $requestURL - $mMetanim - $mUsername")
 
             performPostCall(requestURL, postDataParams)
 
@@ -221,11 +222,15 @@ class LoginActivity: AppCompatActivity() {
 
             if (success!!) {
                 // Saving user credentials on success
-                PrefUtils.saveToPrefs(GoraGPSBeaconApp.getContext(), Constants.PREF_METANIM_KEY, mMetanim)
-                PrefUtils.saveToPrefs(GoraGPSBeaconApp.getContext(), Constants.PREF_USERNAME_KEY, mUsername)
-                PrefUtils.saveToPrefs(GoraGPSBeaconApp.getContext(), Constants.PREF_PASSWORD_KEY, mPassword)
-                mCookie.let { PrefUtils.saveToPrefs(GoraGPSBeaconApp.getContext(), Constants.PREF_COOKIES, mCookie!!) }
-                PrefUtils.saveBooleanToPrefs(GoraGPSBeaconApp.getContext(), Constants.PREF_IS_LOGGED_IN_KEY, true)
+                PrefUtils.saveToPrefs(applicationContext, Constants.PREF_METANIM_KEY, mMetanim)
+                PrefUtils.saveToPrefs(applicationContext, Constants.PREF_USERNAME_KEY, mUsername)
+                PrefUtils.saveToPrefs(applicationContext, Constants.PREF_PASSWORD_KEY, mPassword)
+                mCookie.let {
+                    val cookies: HashSet<String> = HashSet()
+                    mCookie.split(";").forEach { cookies.add(it) }
+                    PrefUtils.saveStringSetToPrefs(applicationContext, Constants.PREF_COOKIES, cookies)
+                }
+                PrefUtils.saveBooleanToPrefs(applicationContext, Constants.PREF_IS_LOGGED_IN_KEY, true)
 
                 // Pass data back to MainActivity
                 val returnIntent = Intent()
@@ -238,6 +243,7 @@ class LoginActivity: AppCompatActivity() {
 
                 Log.d("LoginActivity", "Put back the intent with cookies: $mCookie")
                 finish()
+
             } else {
                 password.error = getString(R.string.error_incorrect_password)
                 password.requestFocus()
@@ -282,13 +288,14 @@ class LoginActivity: AppCompatActivity() {
             os.close()
             val responseCode = conn.responseCode
 
-            if (responseCode == HttpsURLConnection.HTTP_OK) {
+            if (responseCode == HttpURLConnection.HTTP_OK || responseCode == HttpURLConnection.HTTP_MOVED_TEMP) {
                 var line: String
                 val COOKIES_HEADER = "Set-Cookie"
                 mCookie = conn.getHeaderField(COOKIES_HEADER)
                 val br = BufferedReader(InputStreamReader(conn.inputStream))
                 br.use {
                     line = it.readLine()
+                    Log.d("LoginActivity", "Line from buffered reader: $line")
                     response += line
                 }
             } else {

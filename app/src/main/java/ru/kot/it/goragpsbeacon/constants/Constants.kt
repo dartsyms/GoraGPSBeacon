@@ -5,9 +5,7 @@ object Constants {
 
     val LOCATION_PERMISSIONS_REQUEST: Int = 99
 
-    val CURRENT_LOCATION: String = "MY_CURRENT_LOCATION"
-
-    val INTENT_LOCATION_VALUE: String = "currentLocation"
+    val LOCATION_SERVICE_NAME: String = "ru.kot.it.services.goragpsbeacon.UserLocationService"
 
     val USER_LOCATION_SERVICE: String = "UserLocationTracking"
 

@@ -15,5 +15,5 @@ interface WebAPI {
     @GET("/system/geo.php")
     fun sendLocation(@Query("lat") lat: String,
                      @Query("lng") lng: String,
-                     @Query("timestamp") time: String): Call<ResponseBody>
+                     @Query("date") time: String): Call<ResponseBody>
 }

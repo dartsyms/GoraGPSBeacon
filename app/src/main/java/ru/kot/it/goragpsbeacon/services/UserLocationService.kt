@@ -36,8 +36,8 @@ class UserLocationService: Service() {
     override fun onBind(intent: Intent?) = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        super.onStartCommand(intent, flags, startId)
-        return START_STICKY
+        return super.onStartCommand(intent, flags, startId)
+//        return START_STICKY
     }
 
     override fun onCreate() {
@@ -45,7 +45,7 @@ class UserLocationService: Service() {
         val pendingIntent: PendingIntent = PendingIntent.getActivity(this, 0, intent, 0)
         val notification: Notification = NotificationCompat.Builder(this)
                 .setContentIntent(pendingIntent)
-                .setSmallIcon(R.drawable.ic_child_care_black_24dp)
+                .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentText("Location Service for GoraOnline")
                 .setContentTitle("ULTService")
                 .build()
@@ -70,9 +70,9 @@ class UserLocationService: Service() {
         if (locationManager == null)
             locationManager = applicationContext.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
-        when (GPSHelper.checkLocationPermission(GoraGPSBeaconApp.getContext())) {
+        when (GPSHelper.checkLocationPermission(this)) {
 
-            GPSHelper.hasGPSProviderEnabled(GoraGPSBeaconApp.getContext()) -> {
+            GPSHelper.hasGPSProviderEnabled(this) -> {
                 try {
                     locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, INTERVAL, DISTANCE, locationListeners[0])
                 } catch(e: SecurityException) {
@@ -82,7 +82,7 @@ class UserLocationService: Service() {
                 }
             }
 
-            GPSHelper.hasNetworkProviderEnabled(GoraGPSBeaconApp.getContext()) -> {
+            GPSHelper.hasNetworkProviderEnabled(this) -> {
                 try {
                     locationManager?.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, INTERVAL, DISTANCE, locationListeners[1])
                 } catch (e: SecurityException) {
@@ -107,7 +107,7 @@ class UserLocationService: Service() {
         )
 
         val webService by lazy {
-            WebServiceGenerator.createService(WebAPI::class.java, GoraGPSBeaconApp.getContext())
+            WebServiceGenerator.createService(WebAPI::class.java, GoraGPSBeaconApp.instance!!.getContext())
         }
 
         class ULTListener(provider: String): LocationListener {
@@ -117,7 +117,7 @@ class UserLocationService: Service() {
             override fun onLocationChanged(location: Location?) {
                 lastLocation.set(location)
                 // Send current location to the server after network availability check (or store them in array)
-                when (NetworkHelper.hasNetworkAccess(GoraGPSBeaconApp.getContext())) {
+                when (NetworkHelper.hasNetworkAccess(GoraGPSBeaconApp.instance!!.getContext())) {
                     true -> location.let {
                         sendDataImmediate(location!!.latitude.toString(), location.longitude.toString(), Calendar.getInstance().timeInMillis)
                         sendDataDeferred(locStore)
@@ -151,9 +151,9 @@ class UserLocationService: Service() {
                             } else {
                                 when (response.code()) {
                                     400, 401, 402, 403, 404 -> {
-                                        val metanim: String = PrefUtils.getFromPrefs(GoraGPSBeaconApp.getContext(), Constants.PREF_METANIM_KEY, "")
-                                        val user: String = PrefUtils.getFromPrefs(GoraGPSBeaconApp.getContext(), Constants.PREF_USERNAME_KEY, "")
-                                        val password: String = PrefUtils.getFromPrefs(GoraGPSBeaconApp.getContext(), Constants.PREF_PASSWORD_KEY, "")
+                                        val metanim: String = PrefUtils.getFromPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_METANIM_KEY, "")
+                                        val user: String = PrefUtils.getFromPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_USERNAME_KEY, "")
+                                        val password: String = PrefUtils.getFromPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_PASSWORD_KEY, "")
 
                                         val authCallResult = webService.login(metanim, user, password).execute()
 

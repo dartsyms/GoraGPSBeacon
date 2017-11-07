@@ -6,23 +6,23 @@ import android.content.Context
 class GoraGPSBeaconApp: Application() {
 
     companion object {
+        var instance: GoraGPSBeaconApp? = null
+    }
 
-        private var instance: GoraGPSBeaconApp = this.create()
+    fun getContext(): Context {
+        return instance as Context
+    }
 
-        init {
-            instance = this.create()
-        }
+    fun getInstance(): Context {
+        if (instance == null)
+            instance = GoraGPSBeaconApp()
 
-        private fun create(): GoraGPSBeaconApp = GoraGPSBeaconApp()
-
-        fun getContext(): Context {
-            return instance
-        }
-
+        return instance as Context
     }
 
     override fun onCreate() {
         super.onCreate()
+        instance = this
     }
 
 }

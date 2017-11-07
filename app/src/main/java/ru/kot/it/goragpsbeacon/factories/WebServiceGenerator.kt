@@ -16,7 +16,7 @@ import java.util.*
 
 object WebServiceGenerator {
 
-    private val metanim: String = PrefUtils.getFromPrefs(GoraGPSBeaconApp.getContext(), Constants.PREF_METANIM_KEY, "")
+    private val metanim: String = PrefUtils.getFromPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_METANIM_KEY, "")
     private val requestUrl: String = if (metanim.isNotEmpty()) {
         "https://$metanim." + Constants.BASE_URL
     } else {
@@ -69,7 +69,7 @@ object WebServiceGenerator {
         override fun intercept(chain: Interceptor.Chain?): Response {
             chain.let {
                 val builder: Request.Builder = chain!!.request().newBuilder()
-                val preferences: HashSet<String> = PrefUtils.getStringSetFromPrefs(GoraGPSBeaconApp.getContext(),
+                val preferences: HashSet<String> = PrefUtils.getStringSetFromPrefs(GoraGPSBeaconApp.instance!!.getContext(),
                         Constants.PREF_COOKIES, HashSet())
                 for (cookie: String in preferences) {
                     builder.addHeader("Cookie", cookie)
@@ -88,7 +88,7 @@ object WebServiceGenerator {
                 if (!originalResponse.headers("Set-Cookie").isEmpty()) {
                     val cookies: HashSet<String> = HashSet()
                     cookies += originalResponse.headers("Set-Cookie")
-                    PrefUtils.saveStringSetToPrefs(GoraGPSBeaconApp.getContext(),
+                    PrefUtils.saveStringSetToPrefs(GoraGPSBeaconApp.instance!!.getContext(),
                             Constants.PREF_COOKIES, cookies)
                 }
                 return originalResponse
