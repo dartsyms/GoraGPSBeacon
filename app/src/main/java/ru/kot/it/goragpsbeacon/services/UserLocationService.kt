@@ -8,10 +8,15 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
 import android.util.Log
+import ru.kot.it.goragpsbeacon.apis.WebAPI
 import ru.kot.it.goragpsbeacon.constants.Constants
+import ru.kot.it.goragpsbeacon.factories.WebServiceGenerator
 import ru.kot.it.goragpsbeacon.infrastructure.GoraGPSBeaconApp
+import ru.kot.it.goragpsbeacon.models.UserLocation
 import ru.kot.it.goragpsbeacon.utils.GPSHelper
+import ru.kot.it.goragpsbeacon.utils.PrefUtils
 import java.util.*
+import kotlin.collections.ArrayList
 
 
 class UserLocationService: Service() {
@@ -70,10 +75,16 @@ class UserLocationService: Service() {
         val INTERVAL = Constants.LOCATION_INTERVAL
         val DISTANCE = Constants.GPS_ACCURACY_LEVEL
 
+        val locStore: ArrayList<UserLocation> = ArrayList()
+
         val locationListeners = arrayOf(
                 ULTListener(LocationManager.GPS_PROVIDER),
                 ULTListener(LocationManager.NETWORK_PROVIDER)
         )
+
+        val webService by lazy {
+            WebServiceGenerator.createService(WebAPI::class.java, GoraGPSBeaconApp.getContext())
+        }
 
         class ULTListener(provider: String) : LocationListener {
 
@@ -83,7 +94,7 @@ class UserLocationService: Service() {
                 lastLocation.set(location)
                 // TODO: Send current location to the server after network availability check (or store them in array)
                 location.let {
-                    sendData(location!!, Calendar.getInstance().timeInMillis.toString())
+                    sendData(location!!, Calendar.getInstance().timeInMillis)
                 }
             }
 
@@ -96,8 +107,29 @@ class UserLocationService: Service() {
             override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
             }
 
-            private fun sendData(location: Location, timestamp: String) {
+            private fun sendData(location: Location, timestamp: Long) {
                 // TODO: Implement via web services with auth check
+
+                val call = webService.sendLocation(location.latitude.toString(), location.longitude.toString(), timestamp.toString())
+                val result = call.execute()
+                if (!result.isSuccessful) {
+                    when (result.code()) {
+                        400, 401, 402, 403, 404 -> {
+                            val metanim: String = PrefUtils.getFromPrefs(GoraGPSBeaconApp.getContext(), Constants.PREF_METANIM_KEY, "")
+                            val user: String = PrefUtils.getFromPrefs(GoraGPSBeaconApp.getContext(), Constants.PREF_USERNAME_KEY, "")
+                            val password: String = PrefUtils.getFromPrefs(GoraGPSBeaconApp.getContext(), Constants.PREF_PASSWORD_KEY, "")
+                            webService.login(metanim, user, password)
+                        }
+                        else -> {
+                            // do something with error and save location somewhere
+                            Log.d("UserLocationService", result.errorBody().toString())
+                            val userLocation = UserLocation(location.latitude.toString(), location.longitude.toString(), timestamp)
+                            locStore.add(userLocation)
+                        }
+                    }
+                } else {
+                    Log.d("UserLocationService", result.body().toString())
+                }
             }
 
         }

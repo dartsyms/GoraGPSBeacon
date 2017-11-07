@@ -26,12 +26,21 @@ object WebServiceGenerator {
     private val httpClientBuilder: OkHttpClient.Builder = OkHttpClient.Builder()
     private val retrofitBuilder: Retrofit.Builder = Retrofit.Builder().baseUrl(requestUrl)
 
+
     fun <S> createService(serviceClass: Class<S>, ctx: Context): S {
 
         httpClientBuilder.interceptors().add(LoggingInterceptor)
         httpClientBuilder.interceptors().add(SendCookiesInterceptor)
         httpClientBuilder.interceptors().add(ReceiveCookiesInterceptor)
 
+        httpClientBuilder.interceptors().add(Interceptor { chain ->
+            val original: Request = chain.request()
+            val request: Request = original.newBuilder()
+                    .header("User-Agent", "Android GoraGPSBeacon v1.0.0")
+                    .method(original.method(), original.body())
+                    .build()
+            chain.proceed(request)
+        })
 
         val httpClient: OkHttpClient = httpClientBuilder.build()
         val retrofit: Retrofit = retrofitBuilder.client(httpClient).build()
