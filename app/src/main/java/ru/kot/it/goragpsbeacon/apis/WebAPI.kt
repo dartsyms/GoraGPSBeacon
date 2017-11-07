@@ -13,7 +13,7 @@ interface WebAPI {
               @Field("password") password: String): Call<ResponseBody>
 
     @GET("/system/geo.php")
-    fun sendLocation(@Query("lat") lat: String,
-                     @Query("lng") lng: String,
-                     @Query("date") time: String): Call<ResponseBody>
+    fun sendLocation(@Query("lat") latitude: String,
+                     @Query("lng") longitude: String,
+                     @Query("date") timestamp: String): Call<ResponseBody>
 }

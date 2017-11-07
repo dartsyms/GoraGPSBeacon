@@ -3,7 +3,6 @@ package ru.kot.it.goragpsbeacon.utils
 import android.content.Context
 import android.content.SharedPreferences
 import android.preference.PreferenceManager
-import android.util.Log
 
 
 object PrefUtils {

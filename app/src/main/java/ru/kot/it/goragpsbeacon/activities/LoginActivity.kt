@@ -66,8 +66,8 @@ class LoginActivity: AppCompatActivity() {
     }
 
     override fun dispatchTouchEvent(event: MotionEvent?): Boolean {
-        event.let {
-            if (event!!.action == MotionEvent.ACTION_DOWN) {
+        event?.let {
+            if (event.action == MotionEvent.ACTION_DOWN) {
                 val view: View = currentFocus
                 if (view is EditText) {
                     val outRect: Rect = Rect()
@@ -203,7 +203,7 @@ class LoginActivity: AppCompatActivity() {
 
         override fun doInBackground(vararg params: Void): Boolean? {
             // Attempt authentication
-            val requestURL = "http://$mMetanim.gora.online"
+            val requestURL = "https://$mMetanim.gora.online"
             val postDataParams: HashMap<String, String> = HashMap()
             postDataParams.put("system", mMetanim)
             postDataParams.put("user", mUsername)

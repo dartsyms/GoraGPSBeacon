@@ -37,7 +37,6 @@ class UserLocationService: Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         return super.onStartCommand(intent, flags, startId)
-//        return START_STICKY
     }
 
     override fun onCreate() {
@@ -118,12 +117,12 @@ class UserLocationService: Service() {
                 lastLocation.set(location)
                 // Send current location to the server after network availability check (or store them in array)
                 when (NetworkHelper.hasNetworkAccess(GoraGPSBeaconApp.instance!!.getContext())) {
-                    true -> location.let {
-                        sendDataImmediate(location!!.latitude.toString(), location.longitude.toString(), Calendar.getInstance().timeInMillis)
+                    true -> location?.let {
+                        sendDataImmediate(location.latitude.toString(), location.longitude.toString(), Calendar.getInstance().timeInMillis)
                         sendDataDeferred(locStore)
                     }
-                    false -> location.let {
-                        val userLocation = UserLocation(location!!.latitude.toString(),
+                    false -> location?.let {
+                        val userLocation = UserLocation(location.latitude.toString(),
                                                         location.longitude.toString(),
                                                         Calendar.getInstance().timeInMillis)
                         locStore.add(userLocation)
@@ -145,8 +144,8 @@ class UserLocationService: Service() {
                 val userLocation = UserLocation(latitude, longitude, timestamp)
                 call.enqueue(object: Callback<ResponseBody> {
                     override fun onResponse(currentCall: Call<ResponseBody>?, response: Response<ResponseBody>?) {
-                        response.let {
-                            if (response!!.isSuccessful) {
+                        response?.let {
+                            if (response.isSuccessful) {
                                 // do nothing
                             } else {
                                 when (response.code()) {
@@ -157,8 +156,8 @@ class UserLocationService: Service() {
 
                                         val authCallResult = webService.login(metanim, user, password).execute()
 
-                                        authCallResult.let {
-                                            if (authCallResult!!.code() == 200) {
+                                        authCallResult?.let {
+                                            if (authCallResult.code() == 200) {
                                                 val result = currentCall!!.execute()
                                                 when (result.code()) {
                                                     200 -> {}
@@ -197,7 +196,7 @@ class UserLocationService: Service() {
                     true -> return
                     false -> {
                         dataList.forEach { elem ->
-                            sendDataImmediate(elem.latitude!!, elem.longitude!!, elem.timestamp!!)
+                            sendDataImmediate(elem.latitude?: "", elem.longitude?: "", elem.timestamp?: 0L)
                             dataList.remove(elem)
                         }
                     }

@@ -26,7 +26,7 @@ class MainActivity : AppCompatActivity() {
         serviceIsRunning = ServiceChecker.isServiceRunning(UserLocationService.javaClass, this)
         Log.d("MainActivity", "service in activity's onCreate: $serviceIsRunning")
 
-        showServiceButton()
+        setupLaunchButton()
 
         toggle_tracking.setOnClickListener { view ->
             serviceIsRunning = !serviceIsRunning
@@ -34,13 +34,13 @@ class MainActivity : AppCompatActivity() {
                 true -> {
                     if (!serviceIsRunning) {
                         startService(Intent(this, UserLocationService::class.java))
-//                        toggle_tracking.setImageResource(R.drawable.ic_pause_black)
-                        showServiceButton()
+                        setupLaunchButton()
+                        !serviceIsRunning
                         Log.d("MainActivity", "service after click on start: $serviceIsRunning")
                     } else {
                         stopService(Intent(this, UserLocationService::class.java))
-//                        toggle_tracking.setImageResource(R.drawable.ic_play_arrow_black)
-                        showServiceButton()
+                        setupLaunchButton()
+                        !serviceIsRunning
                         Log.d("MainActivity", "service after click on stop: $serviceIsRunning")
                     }
                 }
@@ -57,8 +57,8 @@ class MainActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == Constants.LOGIN_REQUEST_CODE) {
             if (resultCode == Activity.RESULT_OK) {
-                data.let {
-                    isRegisteredUser = data!!.getBooleanExtra("loggedIn", true)
+                data?.let {
+                    isRegisteredUser = true || data.getBooleanExtra("loggedIn", true)
                     PrefUtils.saveToPrefs(this, Constants.PREF_METANIM_KEY, data.getStringExtra("metanim"))
                     PrefUtils.saveToPrefs(this, Constants.PREF_USERNAME_KEY, data.getStringExtra("user"))
                     PrefUtils.saveToPrefs(this, Constants.PREF_PASSWORD_KEY, data.getStringExtra("password"))
@@ -67,18 +67,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showServiceButton() {
+    private fun setupLaunchButton() {
         serviceIsRunning = ServiceChecker.isServiceRunning(UserLocationService.javaClass, applicationContext)
         when (serviceIsRunning) {
             true -> {
                 toggle_tracking.setImageResource(R.drawable.ic_pause_black)
-                serviceIsRunning = true
-                Log.d("MainActivity", "service in showbuttontrue: $serviceIsRunning")
+                Log.d("MainActivity", "service in launchbuttontrue: $serviceIsRunning")
             }
             false -> {
                 toggle_tracking.setImageResource(R.drawable.ic_play_arrow_black)
-                serviceIsRunning = false
-                Log.d("MainActivity", "service in showbuttonfalse: $serviceIsRunning")
+                Log.d("MainActivity", "service in launchbuttonfalse: $serviceIsRunning")
             }
         }
     }

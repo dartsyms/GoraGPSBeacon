@@ -77,7 +77,6 @@ object WebServiceGenerator {
                 }
                 return  chain.proceed(builder.build())
             }
-
         }
     }
 
