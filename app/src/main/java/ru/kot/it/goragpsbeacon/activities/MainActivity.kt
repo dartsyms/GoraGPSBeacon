@@ -35,12 +35,12 @@ class MainActivity : AppCompatActivity() {
                     if (!serviceIsRunning) {
                         startService(Intent(this, UserLocationService::class.java))
                         setupLaunchButton()
-                        !serviceIsRunning
+                        serviceIsRunning = !serviceIsRunning
                         Log.d("MainActivity", "service after click on start: $serviceIsRunning")
                     } else {
                         stopService(Intent(this, UserLocationService::class.java))
                         setupLaunchButton()
-                        !serviceIsRunning
+                        serviceIsRunning = !serviceIsRunning
                         Log.d("MainActivity", "service after click on stop: $serviceIsRunning")
                     }
                 }
