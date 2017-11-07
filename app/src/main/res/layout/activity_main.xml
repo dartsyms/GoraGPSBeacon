@@ -12,23 +12,21 @@
     tools:context="ru.kot.it.goragpsbeacon.activities.MainActivity">
 
 
-    <Button
-        android:id="@+id/start_tracking"
-        style="?android:attr/borderlessButtonStyle"
-        android:layout_width="287dp"
+    <ImageButton
+        android:id="@+id/toggle_tracking"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:background="@drawable/button_selector"
-        android:text="@string/start_tracking"
-        android:textColor="@color/textFieldColor"
-        android:textStyle="bold"
+        android:background="@android:color/transparent"
+        android:contentDescription="@string/start_tracking"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_play_arrow_black" />
 
 
 </android.support.constraint.ConstraintLayout>

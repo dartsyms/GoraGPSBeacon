@@ -12,8 +12,8 @@ interface WebAPI {
               @Field("username") username: String,
               @Field("password") password: String): Call<ResponseBody>
 
-    @GET("/geo")
-    fun sendLocation(@Query("latitude") lat: String,
-                     @Query("longitude") lon: String,
+    @GET("/system/geo.php")
+    fun sendLocation(@Query("lat") lat: String,
+                     @Query("lng") lng: String,
                      @Query("timestamp") time: String): Call<ResponseBody>
 }

@@ -70,7 +70,7 @@ object WebServiceGenerator {
             chain.let {
                 val builder: Request.Builder = chain!!.request().newBuilder()
                 val preferences: HashSet<String> = PrefUtils.getStringSetFromPrefs(GoraGPSBeaconApp.getContext(),
-                        Constants.PREF_COOKIES, HashSet<String>())
+                        Constants.PREF_COOKIES, HashSet())
                 for (cookie: String in preferences) {
                     builder.addHeader("Cookie", cookie)
                     Log.v("AddCookiesInterceptor", "Add Header: $cookie")
@@ -86,10 +86,8 @@ object WebServiceGenerator {
             chain.let {
                 val originalResponse: Response = chain!!.proceed(chain.request())
                 if (!originalResponse.headers("Set-Cookie").isEmpty()) {
-                    val cookies: HashSet<String> = HashSet<String>()
-                    for (header: String in originalResponse.headers("Set-Cookie")) {
-                        cookies.add(header)
-                    }
+                    val cookies: HashSet<String> = HashSet()
+                    cookies += originalResponse.headers("Set-Cookie")
                     PrefUtils.saveStringSetToPrefs(GoraGPSBeaconApp.getContext(),
                             Constants.PREF_COOKIES, cookies)
                 }

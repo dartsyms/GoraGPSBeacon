@@ -174,7 +174,7 @@ class LoginActivity: AppCompatActivity() {
                     .alpha(if (show) 0f else 1f)
                     .setListener(object : AnimatorListenerAdapter() {
                         override fun onAnimationEnd(animation: Animator) {
-                            login_form.setVisibility(if (show) View.GONE else View.VISIBLE)
+                            login_form.visibility = if (show) View.GONE else View.VISIBLE
                         }
                     })
 
@@ -183,14 +183,14 @@ class LoginActivity: AppCompatActivity() {
                     .alpha(if (show) 1f else 0f)
                     .setListener(object : AnimatorListenerAdapter() {
                         override fun onAnimationEnd(animation: Animator) {
-                            login_progress.setVisibility(if (show) View.VISIBLE else View.GONE)
+                            login_progress.visibility = if (show) View.VISIBLE else View.GONE
                         }
                     })
         } else {
             // The ViewPropertyAnimator APIs are not available, so simply show
             // and hide the relevant UI components.
-            login_progress.setVisibility(if (show) View.VISIBLE else View.GONE)
-            login_form.setVisibility(if (show) View.GONE else View.VISIBLE)
+            login_progress.visibility = if (show) View.VISIBLE else View.GONE
+            login_form.visibility = if (show) View.GONE else View.VISIBLE
         }
     }
 

@@ -24,12 +24,22 @@ class MainActivity : AppCompatActivity() {
         isRegisteredUser = PrefUtils.getBooleanFromPrefs(GoraGPSBeaconApp.getContext(), Constants.PREF_IS_LOGGED_IN_KEY, false)
         serviceIsRunning = ServiceChecker.isServiceRunning(UserLocationService.javaClass, GoraGPSBeaconApp.getContext())
 
-        start_tracking.setOnClickListener { view ->
+        when (serviceIsRunning) {
+            true -> {
+                toggle_tracking.setImageResource(R.drawable.ic_pause_black)
+            }
+            false -> {
+                toggle_tracking.setImageResource(R.drawable.ic_play_arrow_black)
+            }
+        }
+
+        toggle_tracking.setOnClickListener { view ->
             when (isRegisteredUser) {
                 true -> {
                     if (!serviceIsRunning) {
-                        val trackingIntent = Intent(this, UserLocationService::class.java)
-                        startService(trackingIntent)
+                        startService(Intent(this, UserLocationService::class.java))
+                        toggle_tracking.setImageResource(R.drawable.ic_pause_black)
+                        serviceIsRunning = true
                     }
                 }
                 false -> {
