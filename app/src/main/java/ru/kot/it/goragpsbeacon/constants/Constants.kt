@@ -17,9 +17,13 @@ object Constants {
 
     val LOGIN_REQUEST_CODE: Int = 901
 
-    val PREF_COOKIES = "ru.kot.it.goragpsbeacon.COOKIES"
+    val PREF_COOKIES_SET = "ru.kot.it.goragpsbeacon.COOKIES_SET"
+    val PREF_COOKIES_STRING = "ru.kot.it.goragpsbeacon.COOKIES_STRING"
     val PREF_IS_LOGGED_IN_KEY = "ru.kot.it.goragpsbeacon.LOGGED"
     val PREF_METANIM_KEY = "ru.kot.it.goragpsbeacon.METANIM"
     val PREF_USERNAME_KEY = "ru.kot.it.goragpsbeacon.USER"
     val PREF_PASSWORD_KEY = "ru.kot.it.goragpsbeacon.PASS"
+
+    val ACTION_SERVER_READY = "serverReady"
+    val ACTION_SERVER_MESSAGE = "serverMessage"
 }

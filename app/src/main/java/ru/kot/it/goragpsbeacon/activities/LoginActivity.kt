@@ -23,14 +23,16 @@ import java.io.*
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
-import javax.net.ssl.HttpsURLConnection
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.os.Build
 import android.annotation.TargetApi
 import android.text.TextUtils
-
-
+import ru.kot.it.goragpsbeacon.infrastructure.GoraGPSBeaconApp
+import ru.kot.it.goragpsbeacon.infrastructure.KeyPinStore
+import java.security.SecureRandom
+import javax.net.ssl.HttpsURLConnection
+import javax.net.ssl.SSLContext
 
 
 class LoginActivity: AppCompatActivity() {
@@ -60,9 +62,9 @@ class LoginActivity: AppCompatActivity() {
             }
         })
 
-        metanim.setText(PrefUtils.getFromPrefs(this, Constants.PREF_METANIM_KEY, ""))
-        username.setText(PrefUtils.getFromPrefs(this, Constants.PREF_USERNAME_KEY, ""))
-        password.setText(PrefUtils.getFromPrefs(this, Constants.PREF_PASSWORD_KEY, ""))
+        metanim.setText(PrefUtils.getFromPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_METANIM_KEY, ""))
+        username.setText(PrefUtils.getFromPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_USERNAME_KEY, ""))
+        password.setText(PrefUtils.getFromPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_PASSWORD_KEY, ""))
     }
 
     override fun dispatchTouchEvent(event: MotionEvent?): Boolean {
@@ -209,7 +211,7 @@ class LoginActivity: AppCompatActivity() {
             postDataParams.put("user", mUsername)
             postDataParams.put("password", mPassword)
 
-            Log.d("LoginActivity", "Before postCall: $requestURL - $mMetanim - $mUsername")
+            Log.d("LoginActivity", "Before performPostCall(): $requestURL - $mMetanim - $mUsername")
 
             performPostCall(requestURL, postDataParams)
 
@@ -222,15 +224,11 @@ class LoginActivity: AppCompatActivity() {
 
             if (success!!) {
                 // Saving user credentials on success
-                PrefUtils.saveToPrefs(applicationContext, Constants.PREF_METANIM_KEY, mMetanim)
-                PrefUtils.saveToPrefs(applicationContext, Constants.PREF_USERNAME_KEY, mUsername)
-                PrefUtils.saveToPrefs(applicationContext, Constants.PREF_PASSWORD_KEY, mPassword)
-                mCookie.let {
-                    val cookies: HashSet<String> = HashSet()
-                    mCookie.split(";").forEach { cookies.add(it) }
-                    PrefUtils.saveStringSetToPrefs(applicationContext, Constants.PREF_COOKIES, cookies)
-                }
-                PrefUtils.saveBooleanToPrefs(applicationContext, Constants.PREF_IS_LOGGED_IN_KEY, true)
+                PrefUtils.saveToPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_METANIM_KEY, mMetanim)
+                PrefUtils.saveToPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_USERNAME_KEY, mUsername)
+                PrefUtils.saveToPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_PASSWORD_KEY, mPassword)
+                PrefUtils.saveToPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_COOKIES_STRING, mCookie)
+                PrefUtils.saveBooleanToPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_IS_LOGGED_IN_KEY, true)
 
                 // Pass data back to MainActivity
                 val returnIntent = Intent()
@@ -241,7 +239,10 @@ class LoginActivity: AppCompatActivity() {
                 returnIntent.putExtra("cookie", mCookie)
                 setResult(Activity.RESULT_OK, returnIntent)
 
+                val loggedCookies = PrefUtils.getStringSetFromPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_COOKIES_SET, hashSetOf("nothing"))
+
                 Log.d("LoginActivity", "Put back the intent with cookies: $mCookie")
+                Log.d("LoginActivity", "Put back the intent with saved cookies: $loggedCookies")
                 finish()
 
             } else {
@@ -269,7 +270,8 @@ class LoginActivity: AppCompatActivity() {
 
         try {
             url = URL(requestURL + "/system/logon.php")
-            val conn = url.openConnection() as HttpURLConnection
+            val conn = url.openConnection() as HttpsURLConnection
+            conn.sslSocketFactory = KeyPinStore.createInstance().context.socketFactory
             conn.readTimeout = 15000
             conn.connectTimeout = 15000
             conn.requestMethod = "POST"
@@ -278,6 +280,7 @@ class LoginActivity: AppCompatActivity() {
             conn.setRequestProperty("Connection", "close")
             conn.doInput = true
             conn.doOutput = true
+            conn.connect()
 
             val os = conn.outputStream
             val writer = BufferedWriter(OutputStreamWriter(os, "UTF-8"))
@@ -288,11 +291,11 @@ class LoginActivity: AppCompatActivity() {
             os.close()
             val responseCode = conn.responseCode
 
-            if (responseCode == HttpURLConnection.HTTP_OK || responseCode == HttpURLConnection.HTTP_MOVED_TEMP) {
+            if (responseCode == HttpsURLConnection.HTTP_OK) {
                 var line: String
                 val COOKIES_HEADER = "Set-Cookie"
                 mCookie = conn.getHeaderField(COOKIES_HEADER)
-                val br = BufferedReader(InputStreamReader(conn.inputStream))
+                val br = BufferedReader(InputStreamReader(conn.inputStream), 8192)
                 br.use {
                     line = it.readLine()
                     Log.d("LoginActivity", "Line from buffered reader: $line")

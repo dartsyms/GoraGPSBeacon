@@ -10,6 +10,7 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
 import android.support.v4.app.NotificationCompat
+import android.support.v4.content.LocalBroadcastManager
 import android.util.Log
 import okhttp3.ResponseBody
 import retrofit2.Call
@@ -51,6 +52,8 @@ class UserLocationService: Service() {
 
         locationManagerSetup()
         startForeground(911, notification)
+        sendMessageToActivity(true)
+        Log.d("UserLocationService", "In onCreate: UTLService started")
     }
 
     override fun onDestroy() {
@@ -63,11 +66,16 @@ class UserLocationService: Service() {
                     Log.w(TAG, "Failed to remove location listeners")
                 }
             }
+        Log.d("UserLocationService", "Service destroyed")
     }
 
     private fun locationManagerSetup() {
         if (locationManager == null)
-            locationManager = applicationContext.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            locationManager = this.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+        Log.d("UserLocationService", "In locationManagerSetup(): checkLocationPermission -> ${GPSHelper.checkLocationPermission(this)}")
+        Log.d("UserLocationService", "In locationManagerSetup(): hasGPSProviderEnabled -> ${GPSHelper.hasGPSProviderEnabled(this)}")
+        Log.d("UserLocationService", "In locationManagerSetup(): hasNetworkProviderEnabled -> ${GPSHelper.hasNetworkProviderEnabled(this)}")
 
         when (GPSHelper.checkLocationPermission(this)) {
 
@@ -93,12 +101,19 @@ class UserLocationService: Service() {
         }
     }
 
+    private fun sendMessageToActivity(alive: Boolean) {
+        val sendIntent = Intent(Constants.ACTION_SERVER_READY)
+                .putExtra("status", alive)
+        LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(sendIntent)
+        Log.d("UserLocationService", "Message sent from service to activity")
+    }
+
     companion object {
         val TAG = Constants.USER_LOCATION_SERVICE
         val INTERVAL = Constants.LOCATION_INTERVAL
         val DISTANCE = Constants.GPS_ACCURACY_LEVEL
 
-        val locStore: ArrayList<UserLocation> = ArrayList()
+        val locStore: MutableList<UserLocation> = ArrayList()
 
         val locationListeners = arrayOf(
                 ULTListener(LocationManager.GPS_PROVIDER),
@@ -116,16 +131,19 @@ class UserLocationService: Service() {
             override fun onLocationChanged(location: Location?) {
                 lastLocation.set(location)
                 // Send current location to the server after network availability check (or store them in array)
+                Log.d("UserLocationService", "has network access: ${NetworkHelper.hasNetworkAccess(GoraGPSBeaconApp.instance!!.getContext())}")
                 when (NetworkHelper.hasNetworkAccess(GoraGPSBeaconApp.instance!!.getContext())) {
                     true -> location?.let {
                         sendDataImmediate(location.latitude.toString(), location.longitude.toString(), Calendar.getInstance().timeInMillis)
                         sendDataDeferred(locStore)
+                        Log.d("UserLocationService", "Inside onLocationChange after send data: $location")
                     }
                     false -> location?.let {
                         val userLocation = UserLocation(location.latitude.toString(),
                                                         location.longitude.toString(),
                                                         Calendar.getInstance().timeInMillis)
                         locStore.add(userLocation)
+                        Log.d("ULTServiceListener", "Inside onLocationChange after save data: $userLocation")
                     }
                 }
             }
@@ -140,6 +158,7 @@ class UserLocationService: Service() {
             }
 
             private fun sendDataImmediate(latitude: String, longitude: String, timestamp: Long) {
+                Log.d("UserLocationService", "In sendDataImmediate() before call")
                 val call = webService.sendLocation(latitude, longitude, timestamp.toString())
                 val userLocation = UserLocation(latitude, longitude, timestamp)
                 call.enqueue(object: Callback<ResponseBody> {
@@ -147,12 +166,15 @@ class UserLocationService: Service() {
                         response?.let {
                             if (response.isSuccessful) {
                                 // do nothing
+                                Log.d("UserLocationService", "In sendDataImmediate() after success")
                             } else {
                                 when (response.code()) {
                                     400, 401, 402, 403, 404 -> {
                                         val metanim: String = PrefUtils.getFromPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_METANIM_KEY, "")
                                         val user: String = PrefUtils.getFromPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_USERNAME_KEY, "")
                                         val password: String = PrefUtils.getFromPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_PASSWORD_KEY, "")
+
+                                        Log.d("UserLocationService", "In sendDataImmediate() relogin: $metanim - $user - $password")
 
                                         val authCallResult = webService.login(metanim, user, password).execute()
 
@@ -191,14 +213,14 @@ class UserLocationService: Service() {
 
             }
 
-            private fun sendDataDeferred(dataList: ArrayList<UserLocation>) {
+            private fun sendDataDeferred(dataList: MutableList<UserLocation>) {
                 when (dataList.isEmpty()) {
                     true -> return
                     false -> {
                         dataList.forEach { elem ->
                             sendDataImmediate(elem.latitude?: "", elem.longitude?: "", elem.timestamp?: 0L)
-                            dataList.remove(elem)
                         }
+                        dataList.clear()
                     }
                 }
             }
