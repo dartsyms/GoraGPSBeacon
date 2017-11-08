@@ -60,12 +60,17 @@ class MainActivity : AppCompatActivity() {
                 false -> {
                     val authIntent = Intent(this, LoginActivity::class.java)
                     startActivityForResult(authIntent, Constants.LOGIN_REQUEST_CODE)
+
+                    startService(Intent(this, UserLocationService::class.java))
+                    serviceIsRunning = true
+                    toggle_tracking.setImageResource(R.drawable.ic_pause_black)
                 }
             }
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == Constants.LOGIN_REQUEST_CODE) {
             if (resultCode == Activity.RESULT_OK) {
                 data?.let {
@@ -80,15 +85,16 @@ class MainActivity : AppCompatActivity() {
                         PrefUtils.saveStringSetToPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_COOKIES_SET, cookies)
                     }
 
+                    if (isRegisteredUser) {
+                        startService(Intent(this, UserLocationService::class.java))
+                        serviceIsRunning = true
+                        toggle_tracking.setImageResource(R.drawable.ic_pause_black)
+                    }
+
                     Log.d("MainActivity", "Saved in prefs from login: ${mCookie}")
                 }
-
-                startService(Intent(this, UserLocationService::class.java))
-                serviceIsRunning = true
-                toggle_tracking.setImageResource(R.drawable.ic_pause_black)
             }
         }
-        super.onActivityResult(requestCode, resultCode, data)
     }
 
     override fun onPause() {

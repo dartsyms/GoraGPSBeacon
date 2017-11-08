@@ -20,7 +20,6 @@ import android.content.Intent
 import android.os.AsyncTask
 import android.util.Log
 import java.io.*
-import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 import android.animation.Animator
@@ -30,9 +29,7 @@ import android.annotation.TargetApi
 import android.text.TextUtils
 import ru.kot.it.goragpsbeacon.infrastructure.GoraGPSBeaconApp
 import ru.kot.it.goragpsbeacon.infrastructure.KeyPinStore
-import java.security.SecureRandom
 import javax.net.ssl.HttpsURLConnection
-import javax.net.ssl.SSLContext
 
 
 class LoginActivity: AppCompatActivity() {
@@ -143,7 +140,6 @@ class LoginActivity: AppCompatActivity() {
             showProgress(true)
             mAuthTask = UserLoginTask(meta, user, pass)
             (mAuthTask as UserLoginTask).execute()
-            finish()
         }
     }
 
