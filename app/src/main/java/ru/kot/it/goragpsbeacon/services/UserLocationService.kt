@@ -3,8 +3,10 @@ package ru.kot.it.goragpsbeacon.services
 import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
@@ -33,6 +35,13 @@ import kotlin.collections.ArrayList
 class UserLocationService: Service() {
 
     private var locationManager: LocationManager? = null
+    private val ping = object: BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            LocalBroadcastManager
+                    .getInstance(this@UserLocationService)
+                    .sendBroadcastSync(Intent("echo"))
+        }
+    }
 
     override fun onBind(intent: Intent?) = null
 
@@ -54,6 +63,9 @@ class UserLocationService: Service() {
         startForeground(911, notification)
         sendMessageToActivity(true)
         Log.d("UserLocationService", "In onCreate: UTLService started")
+        LocalBroadcastManager
+                .getInstance(this)
+                .registerReceiver(ping, IntentFilter("echo"))
     }
 
     override fun onDestroy() {
@@ -67,6 +79,9 @@ class UserLocationService: Service() {
                 }
             }
         Log.d("UserLocationService", "Service destroyed")
+        LocalBroadcastManager
+                .getInstance(this)
+                .unregisterReceiver(ping)
     }
 
     private fun locationManagerSetup() {

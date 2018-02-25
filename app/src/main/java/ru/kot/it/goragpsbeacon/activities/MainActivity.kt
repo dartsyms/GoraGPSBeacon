@@ -1,7 +1,6 @@
 package ru.kot.it.goragpsbeacon.activities
 
 import android.app.Activity
-import android.app.ActivityManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -28,8 +27,15 @@ class MainActivity : AppCompatActivity() {
                 Constants.ACTION_SERVER_READY -> {
                     val flag = intent.getBooleanExtra("alive", false)
                     setupLaunchButton(flag)
+                    serviceIsRunning = true
                 }
             }
+        }
+    }
+    private val echo = object: BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            serviceIsRunning = true
+            setupLaunchButton(serviceIsRunning)
         }
     }
 
@@ -39,10 +45,14 @@ class MainActivity : AppCompatActivity() {
 
         LocalBroadcastManager.getInstance(this)
                 .registerReceiver(receiver, IntentFilter(Constants.ACTION_SERVER_READY))
+        LocalBroadcastManager.getInstance(this)
+                .registerReceiver(echo, IntentFilter("echo"))
+        LocalBroadcastManager.getInstance(this)
+                .sendBroadcastSync(Intent("echo"))
 
         isRegisteredUser = PrefUtils.getBooleanFromPrefs(GoraGPSBeaconApp.instance!!.getContext(),
                 Constants.PREF_IS_LOGGED_IN_KEY, false)
-        serviceIsRunning = ServiceChecker.isServiceRunning(UserLocationService.javaClass, this)
+        serviceIsRunning = isAlive()
 
         toggle_tracking.setOnClickListener { view ->
             when (isRegisteredUser) {
@@ -100,6 +110,8 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         LocalBroadcastManager.getInstance(this)
                 .unregisterReceiver(receiver)
+        LocalBroadcastManager.getInstance(this)
+                .unregisterReceiver(echo)
         super.onPause()
     }
 
@@ -107,6 +119,8 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         LocalBroadcastManager.getInstance(this)
                 .registerReceiver(receiver, IntentFilter(Constants.ACTION_SERVER_READY))
+        LocalBroadcastManager.getInstance(this)
+                .registerReceiver(echo, IntentFilter("echo"))
     }
 
     private fun setupLaunchButton(status: Boolean) {
@@ -121,10 +135,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun isAlive(): Boolean {
-        val manager: ActivityManager = getSystemService(ACTIVITY_SERVICE) as ActivityManager
-        return manager.getRunningServices(Int.MAX_VALUE).any {
-            Constants.LOCATION_SERVICE_NAME == it.service.className
-        }
+        return ServiceChecker.isServiceRunning(UserLocationService.javaClass, this.applicationContext)
     }
 
 }

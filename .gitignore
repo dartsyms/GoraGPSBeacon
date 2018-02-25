@@ -14,6 +14,9 @@ bin/
 gen/
 out/
 
+# Compiled release apk
+app/release/
+
 # Gradle files
 .gradle/
 build/
