@@ -24,6 +24,9 @@ object Constants {
     val PREF_USERNAME_KEY = "ru.kot.it.goragpsbeacon.USER"
     val PREF_PASSWORD_KEY = "ru.kot.it.goragpsbeacon.PASS"
 
-    val ACTION_SERVER_READY = "serverReady"
-    val ACTION_SERVER_MESSAGE = "serverMessage"
+    val BUS_SERVICE_STARTED_EVENT = 906
+    val BUS_LOCATION_SENT_EVENT = 902
+    val BUS_LOCATION_SAVED_EVENT = 903
+    val BUS_RELOGIN_EVENT = 904
+    val BUS_DATA_SENDING_SUCCESS = 905
 }

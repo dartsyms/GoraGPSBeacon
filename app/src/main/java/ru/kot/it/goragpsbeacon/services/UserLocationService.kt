@@ -24,6 +24,8 @@ import ru.kot.it.goragpsbeacon.apis.WebAPI
 import ru.kot.it.goragpsbeacon.constants.Constants
 import ru.kot.it.goragpsbeacon.factories.WebServiceGenerator
 import ru.kot.it.goragpsbeacon.infrastructure.GoraGPSBeaconApp
+import ru.kot.it.goragpsbeacon.infrastructure.RxBus
+import ru.kot.it.goragpsbeacon.models.MessageEvent
 import ru.kot.it.goragpsbeacon.models.UserLocation
 import ru.kot.it.goragpsbeacon.utils.GPSHelper
 import ru.kot.it.goragpsbeacon.utils.NetworkHelper
@@ -37,15 +39,20 @@ class UserLocationService: Service() {
     private var locationManager: LocationManager? = null
     private val ping = object: BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            LocalBroadcastManager
-                    .getInstance(this@UserLocationService)
-                    .sendBroadcastSync(Intent("echo"))
+            when (intent?.action) {
+                "ping" -> {
+                    LocalBroadcastManager
+                            .getInstance(this@UserLocationService)
+                            .sendBroadcastSync(Intent("pong"))
+                }
+            }
         }
     }
 
     override fun onBind(intent: Intent?) = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.d("UserLocationService", "onStartCommand() executed")
         return super.onStartCommand(intent, flags, startId)
     }
 
@@ -61,11 +68,12 @@ class UserLocationService: Service() {
 
         locationManagerSetup()
         startForeground(911, notification)
-        sendMessageToActivity(true)
         Log.d("UserLocationService", "In onCreate: UTLService started")
+
         LocalBroadcastManager
                 .getInstance(this)
                 .registerReceiver(ping, IntentFilter("echo"))
+        RxBus.publish(MessageEvent(Constants.BUS_SERVICE_STARTED_EVENT, "Service started via RxBus"))
     }
 
     override fun onDestroy() {
@@ -116,17 +124,12 @@ class UserLocationService: Service() {
         }
     }
 
-    private fun sendMessageToActivity(alive: Boolean) {
-        val sendIntent = Intent(Constants.ACTION_SERVER_READY)
-                .putExtra("status", alive)
-        LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(sendIntent)
-        Log.d("UserLocationService", "Message sent from service to activity")
-    }
-
     companion object {
         val TAG = Constants.USER_LOCATION_SERVICE
         val INTERVAL = Constants.LOCATION_INTERVAL
         val DISTANCE = Constants.GPS_ACCURACY_LEVEL
+
+        var IS_SERVICE_RUNNING = false
 
         val locStore: MutableList<UserLocation> = ArrayList()
 
@@ -152,6 +155,7 @@ class UserLocationService: Service() {
                         sendDataImmediate(location.latitude.toString(), location.longitude.toString(), Calendar.getInstance().timeInMillis)
                         sendDataDeferred(locStore)
                         Log.d("UserLocationService", "Inside onLocationChange after send data: $location")
+                        RxBus.publish(MessageEvent(Constants.BUS_LOCATION_SENT_EVENT, "Send location data: lat=${location.latitude}, lon=${location.longitude}"))
                     }
                     false -> location?.let {
                         val userLocation = UserLocation(location.latitude.toString(),
@@ -159,6 +163,7 @@ class UserLocationService: Service() {
                                                         Calendar.getInstance().timeInMillis)
                         locStore.add(userLocation)
                         Log.d("ULTServiceListener", "Inside onLocationChange after save data: $userLocation")
+                        RxBus.publish(MessageEvent(Constants.BUS_LOCATION_SAVED_EVENT, "Save location data: lat=${location.latitude}, lon=${location.longitude}"))
                     }
                 }
             }
@@ -182,6 +187,7 @@ class UserLocationService: Service() {
                             if (response.isSuccessful) {
                                 // do nothing
                                 Log.d("UserLocationService", "In sendDataImmediate() after success")
+                                RxBus.publish(MessageEvent(Constants.BUS_DATA_SENDING_SUCCESS, "GPS data sending success"))
                             } else {
                                 when (response.code()) {
                                     400, 401, 402, 403, 404 -> {
@@ -190,6 +196,7 @@ class UserLocationService: Service() {
                                         val password: String = PrefUtils.getFromPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_PASSWORD_KEY, "")
 
                                         Log.d("UserLocationService", "In sendDataImmediate() relogin: $metanim - $user - $password")
+                                        RxBus.publish(MessageEvent(Constants.BUS_RELOGIN_EVENT, "Relogin for $metanim/$user"))
 
                                         val authCallResult = webService.login(metanim, user, password).execute()
 

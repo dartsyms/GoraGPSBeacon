@@ -9,74 +9,70 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v4.content.LocalBroadcastManager
 import android.util.Log
+import android.view.KeyEvent
+import android.widget.Toast
+import io.reactivex.disposables.Disposable
 import kotlinx.android.synthetic.main.activity_main.*
 import ru.kot.it.goragpsbeacon.R
 import ru.kot.it.goragpsbeacon.constants.Constants
 import ru.kot.it.goragpsbeacon.infrastructure.GoraGPSBeaconApp
+import ru.kot.it.goragpsbeacon.infrastructure.RxBus
+import ru.kot.it.goragpsbeacon.models.MessageEvent
 import ru.kot.it.goragpsbeacon.services.UserLocationService
 import ru.kot.it.goragpsbeacon.utils.PrefUtils
-import ru.kot.it.goragpsbeacon.utils.ServiceChecker
 
 class MainActivity : AppCompatActivity() {
 
     private var isRegisteredUser: Boolean = false
-    private var serviceIsRunning: Boolean = false
-    private val receiver = object: BroadcastReceiver() {
+    private val echo = object: BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
-                Constants.ACTION_SERVER_READY -> {
-                    val flag = intent.getBooleanExtra("alive", false)
-                    setupLaunchButton(flag)
-                    serviceIsRunning = true
+                "pong" -> {
+                    UserLocationService.IS_SERVICE_RUNNING = true
+                    setupLaunchButton(UserLocationService.IS_SERVICE_RUNNING)
                 }
             }
         }
     }
-    private val echo = object: BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            serviceIsRunning = true
-            setupLaunchButton(serviceIsRunning)
-        }
-    }
+
+    private var disposableMessage: Disposable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        setupLaunchButton(UserLocationService.IS_SERVICE_RUNNING)
 
         LocalBroadcastManager.getInstance(this)
-                .registerReceiver(receiver, IntentFilter(Constants.ACTION_SERVER_READY))
+                .registerReceiver(echo, IntentFilter("pong"))
         LocalBroadcastManager.getInstance(this)
-                .registerReceiver(echo, IntentFilter("echo"))
-        LocalBroadcastManager.getInstance(this)
-                .sendBroadcastSync(Intent("echo"))
+                .sendBroadcastSync(Intent("ping"))
 
         isRegisteredUser = PrefUtils.getBooleanFromPrefs(GoraGPSBeaconApp.instance!!.getContext(),
                 Constants.PREF_IS_LOGGED_IN_KEY, false)
-        serviceIsRunning = isAlive()
 
         toggle_tracking.setOnClickListener { view ->
             when (isRegisteredUser) {
                 true -> {
-                    if (!serviceIsRunning) {
+                    if (!UserLocationService.IS_SERVICE_RUNNING) {
                         startService(Intent(this, UserLocationService::class.java))
-                        toggle_tracking.setImageResource(R.drawable.ic_pause_black)
-                        serviceIsRunning = true
+                        UserLocationService.IS_SERVICE_RUNNING = true
+                        setupLaunchButton(UserLocationService.IS_SERVICE_RUNNING)
                     } else {
                         stopService(Intent(this, UserLocationService::class.java))
-                        toggle_tracking.setImageResource(R.drawable.ic_play_arrow_black)
-                        serviceIsRunning = false
+                        UserLocationService.IS_SERVICE_RUNNING = false
+                        setupLaunchButton(UserLocationService.IS_SERVICE_RUNNING)
                     }
                 }
                 false -> {
                     val authIntent = Intent(this, LoginActivity::class.java)
                     startActivityForResult(authIntent, Constants.LOGIN_REQUEST_CODE)
-
-                    startService(Intent(this, UserLocationService::class.java))
-                    serviceIsRunning = true
-                    toggle_tracking.setImageResource(R.drawable.ic_pause_black)
                 }
             }
         }
+
+        disposableMessage = RxBus.listen(MessageEvent::class.java).subscribe({
+            showServiceMessage(it.message)
+        })
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -97,11 +93,9 @@ class MainActivity : AppCompatActivity() {
 
                     if (isRegisteredUser) {
                         startService(Intent(this, UserLocationService::class.java))
-                        serviceIsRunning = true
-                        toggle_tracking.setImageResource(R.drawable.ic_pause_black)
+                        UserLocationService.IS_SERVICE_RUNNING = true
+                        setupLaunchButton(UserLocationService.IS_SERVICE_RUNNING)
                     }
-
-                    Log.d("MainActivity", "Saved in prefs from login: ${mCookie}")
                 }
             }
         }
@@ -109,18 +103,30 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         LocalBroadcastManager.getInstance(this)
-                .unregisterReceiver(receiver)
-        LocalBroadcastManager.getInstance(this)
                 .unregisterReceiver(echo)
+        disposableMessage?.dispose()
         super.onPause()
     }
 
     override fun onResume() {
         super.onResume()
         LocalBroadcastManager.getInstance(this)
-                .registerReceiver(receiver, IntentFilter(Constants.ACTION_SERVER_READY))
-        LocalBroadcastManager.getInstance(this)
-                .registerReceiver(echo, IntentFilter("echo"))
+                .registerReceiver(echo, IntentFilter("pong"))
+        disposableMessage = RxBus.listen(MessageEvent::class.java).subscribe({
+            showServiceMessage(it.message)
+        })
+    }
+
+    override fun onDestroy() {
+        disposableMessage?.dispose()
+        super.onDestroy()
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            finish()
+        }
+        return super.onKeyDown(keyCode, event)
     }
 
     private fun setupLaunchButton(status: Boolean) {
@@ -134,8 +140,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun isAlive(): Boolean {
-        return ServiceChecker.isServiceRunning(UserLocationService.javaClass, this.applicationContext)
+    private fun showServiceMessage(msg: String) {
+        Toast.makeText(this, "Message: $msg", Toast.LENGTH_LONG).show()
+        Log.d("RxBusMessage", "Message from service: $msg")
     }
-
 }
