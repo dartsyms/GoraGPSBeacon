@@ -47,7 +47,7 @@ object WebServiceGenerator {
         httpClientBuilder.interceptors().add(Interceptor { chain ->
             val original: Request = chain.request()
             val request: Request = original.newBuilder()
-                    .header("User-Agent", "Android GoraGPSBeacon v1.0.0")
+                    .header("User-Agent", Constants.HTTP_HEADER_USER_AGENT)
                     .method(original.method(), original.body())
                     .build()
             chain.proceed(request)

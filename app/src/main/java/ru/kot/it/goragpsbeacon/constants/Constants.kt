@@ -3,6 +3,8 @@ package ru.kot.it.goragpsbeacon.constants
 
 object Constants {
 
+    val HTTP_HEADER_USER_AGENT = "Android GoraGPSBeacon v1.0.2"
+
     val LOCATION_PERMISSIONS_REQUEST: Int = 99
 
     val LOCATION_SERVICE_NAME: String = "ru.kot.it.services.goragpsbeacon.UserLocationService"
