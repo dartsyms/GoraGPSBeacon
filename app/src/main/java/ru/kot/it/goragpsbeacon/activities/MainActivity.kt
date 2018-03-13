@@ -11,6 +11,7 @@ import android.support.v4.content.LocalBroadcastManager
 import android.util.Log
 import android.view.KeyEvent
 import android.widget.Toast
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import kotlinx.android.synthetic.main.activity_main.*
 import ru.kot.it.goragpsbeacon.R
@@ -70,9 +71,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        disposableMessage = RxBus.listen(MessageEvent::class.java).subscribe({
-            showServiceMessage(it.message)
-        })
+        disposableMessage = RxBus.listen(MessageEvent::class.java)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe {
+                    showServiceMessage(it.message)
+                }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -104,7 +107,6 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         LocalBroadcastManager.getInstance(this)
                 .unregisterReceiver(echo)
-        disposableMessage?.dispose()
         super.onPause()
     }
 
@@ -112,9 +114,6 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         LocalBroadcastManager.getInstance(this)
                 .registerReceiver(echo, IntentFilter("pong"))
-        disposableMessage = RxBus.listen(MessageEvent::class.java).subscribe({
-            showServiceMessage(it.message)
-        })
     }
 
     override fun onDestroy() {

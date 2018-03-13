@@ -1,6 +1,7 @@
 repositories {
     mavenCentral()
     maven { url "https://github.com/alter-ego/advanced-android-logger/raw/develop/releases/"}
+    maven { url "https://jitpack.io" }
 }
 
 apply plugin: 'com.android.application'
@@ -41,3 +42,4 @@ dependencies {
     compile 'com.squareup.okhttp3:okhttp:3.9.0'
     compile 'com.android.support:support-vector-drawable:26.1.0'
 }
+
