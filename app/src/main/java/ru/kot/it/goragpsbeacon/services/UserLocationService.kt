@@ -72,7 +72,7 @@ class UserLocationService: Service() {
 
         LocalBroadcastManager
                 .getInstance(this)
-                .registerReceiver(ping, IntentFilter("echo"))
+                .registerReceiver(ping, IntentFilter("ping"))
         RxBus.publish(MessageEvent(Constants.BUS_SERVICE_STARTED_EVENT, "Service started via RxBus"))
     }
 
