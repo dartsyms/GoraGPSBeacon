@@ -36,17 +36,24 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val toast = object: BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                Constants.SERVICE_MESSAGE_ACTION -> {
+                    val svcMsg = intent.getStringExtra(Constants.SERVICE_MESSAGE_NAME)
+                    showServiceMessage(svcMsg)
+                }
+            }
+        }
+
+    }
+
     private var disposableMessage: Disposable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setupLaunchButton(UserLocationService.IS_SERVICE_RUNNING)
-
-        LocalBroadcastManager.getInstance(this)
-                .registerReceiver(echo, IntentFilter("pong"))
-        LocalBroadcastManager.getInstance(this)
-                .sendBroadcastSync(Intent("ping"))
 
         isRegisteredUser = PrefUtils.getBooleanFromPrefs(GoraGPSBeaconApp.instance!!.getContext(),
                 Constants.PREF_IS_LOGGED_IN_KEY, false)
@@ -107,6 +114,8 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         LocalBroadcastManager.getInstance(this)
                 .unregisterReceiver(echo)
+        LocalBroadcastManager.getInstance(this)
+                .unregisterReceiver(toast)
         super.onPause()
     }
 
@@ -114,6 +123,10 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         LocalBroadcastManager.getInstance(this)
                 .registerReceiver(echo, IntentFilter("pong"))
+        LocalBroadcastManager.getInstance(this)
+                .sendBroadcastSync(Intent("ping"))
+        LocalBroadcastManager.getInstance(this)
+                .registerReceiver(toast, IntentFilter(Constants.SERVICE_MESSAGE_ACTION))
     }
 
     override fun onDestroy() {
@@ -140,7 +153,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showServiceMessage(msg: String) {
-        Toast.makeText(this, "Message: $msg", Toast.LENGTH_LONG).show()
-        Log.d("RxBusMessage", "Message from service: $msg")
+        Toast.makeText(this@MainActivity, "Message: $msg", Toast.LENGTH_LONG).show()
+        Log.d("ServiceMessage", "Message from service: $msg")
     }
 }
