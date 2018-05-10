@@ -1,0 +1,10 @@
+{
+  "latestVersion": "1.4.0",
+  "latestVersionCode": "5",
+  "url": "https://github.com/dartsyms/GoraGPSBeacon/releases",
+  "releaseNotes": [
+    "- Fixed login/logout flow",
+    "- Prepare to app self-update",
+    "- Bug fixes"
+  ]
+}

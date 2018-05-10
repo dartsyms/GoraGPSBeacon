@@ -3,7 +3,7 @@ package ru.kot.it.goragpsbeacon.constants
 
 object Constants {
 
-    const val HTTP_HEADER_USER_AGENT = "Android GoraGPSBeacon v1.0.3"
+    const val HTTP_HEADER_USER_AGENT = "Android GoraGPSBeacon v1.4.0"
 
     const val LOCATION_PERMISSIONS_REQUEST: Int = 99
 
@@ -34,4 +34,6 @@ object Constants {
 
     const val SERVICE_MESSAGE_ACTION = "service"
     const val SERVICE_MESSAGE_NAME = "serviceMessage"
+
+    const val APP_UPDATE_JSON_URL = "https://raw.githubusercontent.com/dartsyms/GoraGPSBeacon/master/app/update-changelog.json"
 }

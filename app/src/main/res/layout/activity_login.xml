@@ -41,6 +41,7 @@
                 android:textSize="15sp"
                 android:textColor="@color/textFieldColor"
                 android:nextFocusForward="@+id/username"
+                android:imeOptions="actionNext"
                 android:singleLine="true" />
 
             <AutoCompleteTextView android:id="@+id/username"
@@ -54,6 +55,7 @@
                 android:textSize="15sp"
                 android:textColor="@color/textFieldColor"
                 android:nextFocusForward="@+id/password"
+                android:imeOptions="actionNext"
                 android:singleLine="true" />
 
             <EditText android:id="@+id/password"
@@ -69,7 +71,7 @@
                 android:singleLine="true"
                 android:imeActionId="9"
                 android:imeActionLabel="Sign In"
-                android:imeOptions="actionUnspecified" />
+                android:imeOptions="actionDone" />
 
             <Button android:id="@+id/sign_in_button"
                 android:layout_width="match_parent"

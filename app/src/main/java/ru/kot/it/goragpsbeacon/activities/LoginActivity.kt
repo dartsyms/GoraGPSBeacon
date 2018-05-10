@@ -24,9 +24,11 @@ import java.net.URL
 import java.net.URLEncoder
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
+import android.annotation.SuppressLint
 import android.os.Build
 import android.annotation.TargetApi
 import android.text.TextUtils
+import org.json.JSONObject
 import ru.kot.it.goragpsbeacon.infrastructure.GoraGPSBeaconApp
 import ru.kot.it.goragpsbeacon.infrastructure.KeyPinStore
 import javax.net.ssl.HttpsURLConnection
@@ -34,9 +36,10 @@ import javax.net.ssl.HttpsURLConnection
 
 class LoginActivity: AppCompatActivity() {
 
-    private val TAG: String = "LoginActivity"
+    private val logTag: String = "LoginActivity"
     private var mAuthTask: UserLoginTask? = null
     var mCookie: String = ""
+    var loginResponse = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,7 +72,7 @@ class LoginActivity: AppCompatActivity() {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 val view: View = currentFocus
                 if (view is EditText) {
-                    val outRect: Rect = Rect()
+                    val outRect = Rect()
                     view.getGlobalVisibleRect(outRect)
                     if (!outRect.contains(event.rawX.toInt(), event.rawY.toInt())) {
                         view.clearFocus()
@@ -87,7 +90,7 @@ class LoginActivity: AppCompatActivity() {
      * If there are form errors (invalid metanim, missing fields, etc.), the
      * errors are presented and no actual login attempt is made.
      */
-    fun attemptLogin() {
+    private fun attemptLogin() {
         if (mAuthTask != null) {
             return
         }
@@ -158,6 +161,7 @@ class LoginActivity: AppCompatActivity() {
     /**
      * Shows the progress UI and hides the login form.
      */
+    @SuppressLint("ObsoleteSdkInt")
     @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
     fun showProgress(show: Boolean) {
         // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
@@ -195,6 +199,7 @@ class LoginActivity: AppCompatActivity() {
      * Represents an asynchronous login/registration task used to authenticate
      * the user.
      */
+    @SuppressLint("StaticFieldLeak")
     inner class UserLoginTask internal constructor(private val mMetanim: String,
                                                    private val mUsername: String,
                                                    private val mPassword: String): AsyncTask<Void, Void, Boolean>() {
@@ -203,11 +208,11 @@ class LoginActivity: AppCompatActivity() {
             // Attempt authentication
             val requestURL = "https://$mMetanim.gora.online"
             val postDataParams: HashMap<String, String> = HashMap()
-            postDataParams.put("system", mMetanim)
-            postDataParams.put("user", mUsername)
-            postDataParams.put("password", mPassword)
+            postDataParams["system"] = mMetanim
+            postDataParams["user"] = mUsername
+            postDataParams["password"] = mPassword
 
-            Log.d("LoginActivity", "Before performPostCall(): $requestURL - $mMetanim - $mUsername")
+            Log.d(logTag, "Before performPostCall(): $requestURL - $mMetanim - $mUsername")
 
             performPostCall(requestURL, postDataParams)
 
@@ -218,7 +223,7 @@ class LoginActivity: AppCompatActivity() {
             mAuthTask = null
             showProgress(false)
 
-            if (success!!) {
+            if (success!! && loginResponse != 0) {
                 // Saving user credentials on success
                 PrefUtils.saveToPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_METANIM_KEY, mMetanim)
                 PrefUtils.saveToPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_USERNAME_KEY, mUsername)
@@ -237,12 +242,12 @@ class LoginActivity: AppCompatActivity() {
 
                 val loggedCookies = PrefUtils.getStringSetFromPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_COOKIES_SET, hashSetOf("nothing"))
 
-                Log.d("LoginActivity", "Put back the intent with cookies: $mCookie")
-                Log.d("LoginActivity", "Put back the intent with saved cookies: $loggedCookies")
+                Log.d(logTag, "Put back the intent with cookies: $mCookie")
+                Log.d(logTag, "Put back the intent with saved cookies: $loggedCookies")
                 finish()
 
             } else {
-                password.error = getString(R.string.error_incorrect_password)
+                password.error = getString(R.string.error_invalid_auth)
                 password.requestFocus()
             }
         }
@@ -265,7 +270,7 @@ class LoginActivity: AppCompatActivity() {
         }
 
         try {
-            url = URL(requestURL + "/system/logon.php")
+            url = URL("$requestURL/system/logon.php")
             val conn = url.openConnection() as HttpsURLConnection
             conn.sslSocketFactory = KeyPinStore.createInstance().context.socketFactory
             conn.readTimeout = 15000
@@ -289,22 +294,24 @@ class LoginActivity: AppCompatActivity() {
 
             if (responseCode == HttpsURLConnection.HTTP_OK) {
                 var line: String
-                val COOKIES_HEADER = "Set-Cookie"
-                mCookie = conn.getHeaderField(COOKIES_HEADER)
+                val cookiesHeader = "Set-Cookie"
+                mCookie = conn.getHeaderField(cookiesHeader)
                 val br = BufferedReader(InputStreamReader(conn.inputStream), 8192)
                 br.use {
                     line = it.readLine()
-                    Log.d("LoginActivity", "Line from buffered reader: $line")
+                    Log.d(logTag, "Line from buffered reader: $line")
                     response += line
                 }
+                loginResponse = JSONObject(response).getInt("login")
             } else {
+                Log.d(logTag, "HTTP error code: $responseCode")
                 response = ""
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
-        Log.d(TAG, "Response from performPostCall: " + response)
+        Log.d(logTag, "Response from performPostCall: $response")
         return response
     }
 

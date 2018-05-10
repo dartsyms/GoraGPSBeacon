@@ -5,12 +5,17 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v4.content.LocalBroadcastManager
+import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.KeyEvent
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.Toast
+import com.github.javiersantos.appupdater.AppUpdater
+import com.github.javiersantos.appupdater.enums.Display
+import com.github.javiersantos.appupdater.enums.UpdateFrom
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import kotlinx.android.synthetic.main.activity_main.*
@@ -21,6 +26,7 @@ import ru.kot.it.goragpsbeacon.infrastructure.RxBus
 import ru.kot.it.goragpsbeacon.models.MessageEvent
 import ru.kot.it.goragpsbeacon.services.UserLocationService
 import ru.kot.it.goragpsbeacon.utils.PrefUtils
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -49,6 +55,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private var disposableMessage: Disposable? = null
+    private var appUpdater: AppUpdater? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,6 +90,19 @@ class MainActivity : AppCompatActivity() {
                 .subscribe {
                     showServiceMessage(it.message)
                 }
+
+        appUpdater = AppUpdater(this)
+                .setDisplay(Display.DIALOG)
+                .setDisplay(Display.NOTIFICATION)
+                .setUpdateFrom(UpdateFrom.JSON)
+                .setUpdateJSON(Constants.APP_UPDATE_JSON_URL)
+                .showAppUpdated(true)
+                .setTitleOnUpdateAvailable("Update available")
+                .setContentOnUpdateAvailable("Check out the latest version of the application")
+                .setButtonUpdate("Update now?")
+                .setButtonDismiss("Maybe later")
+                .setCancelable(true)
+        appUpdater?.start()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -90,7 +110,7 @@ class MainActivity : AppCompatActivity() {
         if (requestCode == Constants.LOGIN_REQUEST_CODE) {
             if (resultCode == Activity.RESULT_OK) {
                 data?.let {
-                    isRegisteredUser = data.getBooleanExtra("loggedIn", true)
+                    isRegisteredUser = data.getBooleanExtra("loggedIn", false)
                     PrefUtils.saveToPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_METANIM_KEY, data.getStringExtra("metanim"))
                     PrefUtils.saveToPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_USERNAME_KEY, data.getStringExtra("user"))
                     PrefUtils.saveToPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_PASSWORD_KEY, data.getStringExtra("password"))
@@ -131,6 +151,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         disposableMessage?.dispose()
+        appUpdater?.stop()
         super.onDestroy()
     }
 
@@ -140,6 +161,25 @@ class MainActivity : AppCompatActivity() {
         }
         return super.onKeyDown(keyCode, event)
     }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        val inflater = menuInflater
+        inflater.inflate(R.menu.options_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+        return when (item?.itemId) {
+            R.id.userExit -> {
+                logoutAndClearCredentials()
+                true
+            }
+            else -> {
+                super.onOptionsItemSelected(item)
+            }
+        }
+    }
+
 
     private fun setupLaunchButton(status: Boolean) {
         when (status) {
@@ -155,5 +195,11 @@ class MainActivity : AppCompatActivity() {
     private fun showServiceMessage(msg: String) {
         Toast.makeText(this@MainActivity, "Message: $msg", Toast.LENGTH_LONG).show()
         Log.d("ServiceMessage", "Message from service: $msg")
+    }
+
+    private fun logoutAndClearCredentials() {
+        PrefUtils.clearAllValuesFromPrefs(GoraGPSBeaconApp.instance!!.getContext())
+        val authIntent = Intent(this, LoginActivity::class.java)
+        startActivityForResult(authIntent, Constants.LOGIN_REQUEST_CODE)
     }
 }

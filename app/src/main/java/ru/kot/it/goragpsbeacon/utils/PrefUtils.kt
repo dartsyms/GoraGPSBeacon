@@ -58,4 +58,11 @@ object PrefUtils {
         }
     }
 
+    fun clearAllValuesFromPrefs(context: Context) {
+        val prefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+        val editor: SharedPreferences.Editor = prefs.edit()
+        editor.clear()
+        editor.apply()
+    }
+
 }
