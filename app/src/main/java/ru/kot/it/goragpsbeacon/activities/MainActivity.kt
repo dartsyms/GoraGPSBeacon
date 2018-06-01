@@ -116,9 +116,13 @@ class MainActivity : AppCompatActivity() {
                     PrefUtils.saveToPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_PASSWORD_KEY, data.getStringExtra("password"))
                     val mCookie = data.getStringExtra("cookie") as String
                     mCookie.let {
-                        val cookies: HashSet<String> = HashSet()
-                        mCookie.split(";").forEach { cookies.add(it) }
-                        PrefUtils.saveStringSetToPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_COOKIES_SET, cookies)
+                        val cookies: HashMap<String, String> = HashMap()
+                        mCookie.split(";").forEach {
+                            val (key, value) = it.trim().split("=")
+                            cookies[key] = value
+                            Log.d("MainActivity", "Cookies from HashMap are: $key=$value")
+                        }
+                        PrefUtils.saveHashMapToPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_COOKIES_MAP, cookies)
                     }
 
                     if (isRegisteredUser) {

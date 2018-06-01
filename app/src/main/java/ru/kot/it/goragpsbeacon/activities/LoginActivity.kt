@@ -240,10 +240,15 @@ class LoginActivity: AppCompatActivity() {
                 returnIntent.putExtra("cookie", mCookie)
                 setResult(Activity.RESULT_OK, returnIntent)
 
-                val loggedCookies = PrefUtils.getStringSetFromPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_COOKIES_SET, hashSetOf("nothing"))
+                val loggedCookies = PrefUtils.getHashMapFromPrefs(GoraGPSBeaconApp.instance!!.getContext(), Constants.PREF_COOKIES_SET, HashMap())
 
                 Log.d(logTag, "Put back the intent with cookies: $mCookie")
-                Log.d(logTag, "Put back the intent with saved cookies: $loggedCookies")
+                if (!loggedCookies.isEmpty()) {
+                    for ((key, value) in loggedCookies) {
+                        Log.d(logTag, "Put back the intent with saved cookies: $key=$value")
+                    }
+                }
+
                 finish()
 
             } else {
@@ -295,7 +300,17 @@ class LoginActivity: AppCompatActivity() {
             if (responseCode == HttpsURLConnection.HTTP_OK) {
                 var line: String
                 val cookiesHeader = "Set-Cookie"
-                mCookie = conn.getHeaderField(cookiesHeader)
+//                mCookie = conn.getHeaderField(cookiesHeader)
+                val headerFields = conn.headerFields
+                for ((key, value) in headerFields) {
+                    when (key) {
+                        cookiesHeader -> {
+                            mCookie = value.joinToString(";")
+                            Log.d(logTag, "Concatenated from multiple cookie headers: $mCookie")
+                        }
+                    }
+                }
+
                 val br = BufferedReader(InputStreamReader(conn.inputStream), 8192)
                 br.use {
                     line = it.readLine()

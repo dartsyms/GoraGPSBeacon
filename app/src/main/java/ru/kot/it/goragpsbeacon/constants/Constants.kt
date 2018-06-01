@@ -3,7 +3,7 @@ package ru.kot.it.goragpsbeacon.constants
 
 object Constants {
 
-    const val HTTP_HEADER_USER_AGENT = "Android GoraGPSBeacon v1.4.0"
+    const val HTTP_HEADER_USER_AGENT = "Android GoraGPSBeacon v1.4.1"
 
     const val LOCATION_PERMISSIONS_REQUEST: Int = 99
 
@@ -20,6 +20,7 @@ object Constants {
     const val LOGIN_REQUEST_CODE: Int = 901
 
     const val PREF_COOKIES_SET = "ru.kot.it.goragpsbeacon.COOKIES_SET"
+    const val PREF_COOKIES_MAP = "ru.kot.it.goragpsbeacon.COOKIES_MAP"
     const val PREF_COOKIES_STRING = "ru.kot.it.goragpsbeacon.COOKIES_STRING"
     const val PREF_IS_LOGGED_IN_KEY = "ru.kot.it.goragpsbeacon.LOGGED"
     const val PREF_METANIM_KEY = "ru.kot.it.goragpsbeacon.METANIM"

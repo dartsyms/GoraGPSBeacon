@@ -113,12 +113,14 @@ object WebServiceGenerator {
         override fun intercept(chain: Interceptor.Chain?): Response {
             chain.let {
                 val builder: Request.Builder = chain!!.request().newBuilder()
-                val preferences: HashSet<String> = PrefUtils.getStringSetFromPrefs(GoraGPSBeaconApp.instance!!.getContext(),
-                        Constants.PREF_COOKIES_SET, HashSet())
-                for (cookie: String in preferences) {
-                    builder.addHeader("Cookie", cookie)
-                    Log.v("AddCookiesInterceptor", "Add Header: $cookie")
-                }
+                val cookieMap: HashMap<String, String> = PrefUtils.getHashMapFromPrefs(GoraGPSBeaconApp.instance!!.getContext(),
+                        Constants.PREF_COOKIES_MAP, HashMap())
+                Log.v("AddCookieInterceptor", "cookieMap: $cookieMap")
+                val cookie = cookieMap.asSequence()
+                                    .filterNot { it.key.trim() in listOf("path", "expires", "domain") }
+                                    .joinToString(";")
+                builder.addHeader("Cookie", cookie)
+                Log.v("AddCookiesInterceptor", "Add Header: $cookie")
                 return  chain.proceed(builder.build())
             }
         }
@@ -129,10 +131,20 @@ object WebServiceGenerator {
             chain.let {
                 val originalResponse: Response = chain!!.proceed(chain.request())
                 if (!originalResponse.headers("Set-Cookie").isEmpty()) {
-                    val cookies: HashSet<String> = HashSet()
-                    cookies += originalResponse.headers("Set-Cookie")
-                    PrefUtils.saveStringSetToPrefs(GoraGPSBeaconApp.instance!!.getContext(),
-                            Constants.PREF_COOKIES_SET, cookies)
+                    val cookies = originalResponse.headers("Set-Cookie")
+                    Log.d("WebServiceGenerator", "Cookies from originalResponse: $cookies")
+                    cookies.let {
+                        val cookieMap = PrefUtils.getHashMapFromPrefs(GoraGPSBeaconApp.instance!!.getContext(),
+                                Constants.PREF_COOKIES_MAP, HashMap())
+                        val cookieStr = cookies.joinToString(";")
+                        cookieStr.split(";").forEach {
+                            val (key, value) = it.trim().split("=")
+                            cookieMap[key] = value
+                            Log.d("WebServiceGenerator", "Cookies from HashMap are: $key=$value")
+                        }
+                        PrefUtils.saveHashMapToPrefs(GoraGPSBeaconApp.instance!!.getContext(),
+                                Constants.PREF_COOKIES_MAP, cookieMap)
+                    }
                 }
                 return originalResponse
             }

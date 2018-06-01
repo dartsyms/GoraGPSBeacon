@@ -16,6 +16,7 @@ import android.support.v4.content.LocalBroadcastManager
 import android.util.Log
 import android.widget.Toast
 import okhttp3.ResponseBody
+import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -194,14 +195,16 @@ class UserLocationService: Service() {
                                         val authCallResult = webService.login(metanim, user, password).execute()
 
                                         authCallResult?.let {
-                                            if (authCallResult.code() == 200) {
+                                            val loginResponse = JSONObject(it.body().toString()).getInt("login")
+                                            if (authCallResult.code() == 200 && loginResponse == 1) {
                                                 val result = currentCall!!.execute()
                                                 when (result.code()) {
-                                                    200 -> {}
+                                                    200 -> { Log.d(TAG, "Result body: ${result.body()}")}
                                                     else -> locStore.add(userLocation)
                                                 }
                                             } else {
                                                 locStore.add(userLocation)
+                                                sendServiceMessage("Logout and login again")
                                             }
                                         }
                                     }
